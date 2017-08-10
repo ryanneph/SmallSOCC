@@ -42,17 +42,17 @@ void loop() {
     uint16_t      pos;
     if (Serial.readBytes(buf, 1)) {
 #ifdef DEBUG_PRINT
-        Serial.print("Beginning to read bytes: ");
-        Serial.println(buf[0], HEX);
+        /* Serial.print("Beginning to read bytes: "); */
+        /* Serial.println(buf[0], HEX); */
 #endif
         if (buf[0] == 0xFF && Serial.readBytes(&buf[1], 1)) {
 #ifdef DEBUG_PRINT
-            Serial.print("Successfully read first magic byte: ");
+            Serial.print("Mag1: ");
             Serial.println(buf[0], HEX);
 #endif
             if (buf[1] == 0xD7 && Serial.readBytes(&buf[2], 3)) {
 #ifdef DEBUG_PRINT
-                Serial.print("Successfully read second magic byte: ");
+                Serial.print("Mag2: ");
                 Serial.println(buf[1], HEX);
 #endif
 
@@ -60,16 +60,16 @@ void loop() {
                 pos     = (uint16_t)( (buf[3]<<8)|(buf[4]) );
 
 #ifdef DEBUG_PRINT
-                Serial.print("Setting Leaflet #");
+                Serial.print("Set #");
                 Serial.print(leaflet+1);
                 Serial.print(" (idx: ");
                 Serial.print(leaflet);
                 Serial.print(")");
-                Serial.print(" to extension: ");
+                Serial.print(" to ext: ");
                 Serial.println(pos);
 #endif
 
-                CircuitPlayground.setPixelColor(leaflet, 0, pos, 30);
+                CircuitPlayground.setPixelColor(leaflet, pos, 0, 30);
             }
         }
     }
