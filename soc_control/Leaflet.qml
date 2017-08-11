@@ -8,7 +8,6 @@ Item {
     property alias orientation: leaflet_base.orientation
     property alias direction: leaflet_base.direction
     property alias extension: leaflet_base.extension
-    property point beginDrag: Qt.point(0, 0)
     property int   full_range: 1
 
     x: 0; y: 0
@@ -49,9 +48,8 @@ Item {
             id: rect_leaf
             width: leaflet.width
             height: leaflet.height
-            border.color: "gray"
-            color: "#67707F"
-            // color: "#1111ee"
+            border.color: "#b27c3e"
+            color: "#e09947"
             opacity: 0.9
             anchors.right: {
                 if (leaflet.orientation === LeafletBase.Horizontal && leaflet.direction === LeafletBase.Positive) {
@@ -126,19 +124,18 @@ Item {
         drag.minimumY: isPositive() ? start.y : start.y + dir*full_range
         drag.maximumY: isPositive() ? start.y + dir*full_range : start.y
 
-        onPressed: {
-            rect_leaf.color = "#59616d"
-            // parent.beginDrag = Qt.point(parent.x, parent.y);
-            console.log(parent.x, parent.y)
-            console.log(drag.minimumX, drag.maximumX, drag.minimumY, drag.maximumY)
-        }
-        onReleased: {
-            rect_leaf.color = "#67707F"
-            // if (leaflet.orientation === LeafletBase.Horizontal) {
-            //     leaflet.extension = parseInt(255*dir*(parent.x-parent.start.x)*1.0/(leaflet.full_range))
-            // } else {
-            //     leaflet.extension = parseInt(255*dir*(parent.y-parent.start.y)*1.0/(leaflet.full_range))
-            // }
-        }
+        // onPressed: {
+        //     rect_leaf.color = "#59616d"
+        //     // console.log(parent.x, parent.y)
+        //     // console.log(drag.minimumX, drag.maximumX, drag.minimumY, drag.maximumY)
+        // }
+        // onReleased: {
+        //     rect_leaf.color = "#67707F"
+        //     // if (leaflet.orientation === LeafletBase.Horizontal) {
+        //     //     leaflet.extension = parseInt(255*dir*(parent.x-parent.start.x)*1.0/(leaflet.full_range))
+        //     // } else {
+        //     //     leaflet.extension = parseInt(255*dir*(parent.y-parent.start.y)*1.0/(leaflet.full_range))
+        //     // }
+        // }
     }
 }

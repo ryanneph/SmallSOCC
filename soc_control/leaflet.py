@@ -78,5 +78,6 @@ class LeafletBase(QQuickItem):
     def _commit_change(self):
         if not EMULATOR_MODE:
             soc_serial.write(bytes([ 0xFF, 0xD7, self._index ]) + self._extension.to_bytes(2, byteorder='big', signed=False) )
+            soc_serial.reset_input_buffer()
 
 qmlRegisterType(LeafletBase, 'LeafletBase', 1, 0, 'LeafletBase')
