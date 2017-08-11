@@ -13,6 +13,6 @@ setup(name='SOC_Control',
       install_requires=[
           'PyOpenGL>=3.1.0',
           'pyqt5>=5.9',
-          'pyserial>=2.7'
+          'pyserial>=3.4'
       ]
       )
