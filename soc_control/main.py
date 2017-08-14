@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 main.py
 
-control frontend for Sparse Orthogonal Collimator SOC
+control frontend for Sparse Orthogonal Collimator (SOC)
 """
 
 import sys

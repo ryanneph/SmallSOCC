@@ -18,10 +18,10 @@ class LeafletBase(QQuickItem):
     Q_ENUMS(Orientation)
     Q_ENUMS(Direction)
 
-    orientationChanged = pyqtSignal(Orientation, arguments=['orientation'])
-    directionChanged = pyqtSignal(Direction, arguments=['direction'])
+    #  orientationChanged = pyqtSignal(Orientation, arguments=['orientation'])
+    #  directionChanged = pyqtSignal(Direction, arguments=['direction'])
     extensionChanged = pyqtSignal([int], arguments=['extension'])
-    indexChanged = pyqtSignal([int], arguments=['index'])
+    #  indexChanged = pyqtSignal([int], arguments=['index'])
 
     def __init__(self, *args, **kwargs):
         QQuickItem.__init__(self, **kwargs)
@@ -36,7 +36,7 @@ class LeafletBase(QQuickItem):
         QQuickItem.componentComplete(self)
         self.extension = 0 # reset leaflets to home position
 
-    @pyqtProperty(Orientation, notify=orientationChanged)
+    @pyqtProperty(Orientation) #, notify=orientationChanged)
     def orientation(self):
         return self._orientation
 
@@ -44,7 +44,7 @@ class LeafletBase(QQuickItem):
     def orientation(self, val):
         self._orientation = val
 
-    @pyqtProperty(Direction, notify=directionChanged)
+    @pyqtProperty(Direction) #, notify=directionChanged)
     def direction(self):
         return self._direction
 
@@ -52,7 +52,7 @@ class LeafletBase(QQuickItem):
     def direction(self, val):
         self._direction = val
 
-    @pyqtProperty(int, notify=indexChanged)
+    @pyqtProperty(int) #, notify=indexChanged)
     def index(self):
         return self._index
 

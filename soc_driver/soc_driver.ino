@@ -7,7 +7,7 @@ void setup() {
     CircuitPlayground.begin();
 
     /* Startup Seqeunce */
-    uint8_t nloops = 3;
+    uint8_t nloops = 4;
     for (int i=0; i<10*nloops; i++) {
         /* if (i%10 == 0) { CircuitPlayground.clearPixels(); } */
         if (i < (nloops-1)*10) {
@@ -17,13 +17,13 @@ void setup() {
             CircuitPlayground.setPixelColor(i%10 + 1, 0, 0, 0);
             CircuitPlayground.setPixelColor(i%10, 0, 255, 0);
         }
-        delay(70);
+        delay(40);
     }
 
     CircuitPlayground.clearPixels();
     for (int i=0; i<8; i++) {
         CircuitPlayground.setPixelColor(i, 0, 0, 30);
-        delay(125);
+        delay(100);
     }
 }
 

@@ -5,14 +5,14 @@ import LeafletBase 1.0
 
 ApplicationWindow {
     visible: true
-    title: mainwindow_title
+    title: mainwindow_title // global property injection
     id: mainwindow
     width: 600; height: 600
-    style: ApplicationWindowStyle {
-        background: Rectangle{
-            color: "#FFFFFF"
-        }
-    }
+    minimumHeight: height
+    maximumHeight: height
+    minimumWidth: width
+    maximumWidth: width
+    color: "white"
 
     Rectangle {
         id: soc_display
