@@ -1,4 +1,4 @@
-from _serial import soc_serial, EMULATOR_MODE
+from hardware import HWSOC
 from PyQt5.QtCore import pyqtProperty, pyqtSignal, pyqtSlot, Q_ENUMS
 from PyQt5.QtQml import qmlRegisterType
 from PyQt5.QtQuick import QQuickItem
@@ -24,6 +24,7 @@ class LeafletBase(QQuickItem):
     #  indexChanged = pyqtSignal([int], arguments=['index'])
 
     def __init__(self, *args, **kwargs):
+        self._hwsoc = HWSOC()
         QQuickItem.__init__(self, **kwargs)
         self._index = 0
         self._extension = 0
@@ -76,8 +77,9 @@ class LeafletBase(QQuickItem):
 
     #  @pyqtSlot(int)
     def _commit_change(self):
-        if not EMULATOR_MODE:
-            soc_serial.write(bytes([ 0xFF, 0xD7, self._index ]) + self._extension.to_bytes(2, byteorder='big', signed=False) )
-            soc_serial.reset_input_buffer()
+        self._hwsoc.set_position(self.index, self.extension)
 
+
+
+# make LeafletBase accessible to qml
 qmlRegisterType(LeafletBase, 'LeafletBase', 1, 0, 'LeafletBase')

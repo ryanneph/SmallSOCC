@@ -22,12 +22,15 @@ from version import VERSION_FULL
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+from hardware import HWSOC
 from leaflet import LeafletBase
 
 
 ####################################################################################################
 # Start GUI
 if __name__ == '__main__':
+    HWSOC(8)
+
     app = QGuiApplication(sys.argv)
 
     engine = QQmlApplicationEngine()
