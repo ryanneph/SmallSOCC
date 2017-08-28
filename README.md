@@ -2,6 +2,7 @@
 Welcome to SOC control, a simple gui for commanding an arduino based linear stepper controller over a serial interface.
 ### Dependencies
 Python package dependencies are handled during setup or can be installed manually using `pip install <package-name>`
+
 - [Python >=3.4](https://www.python.org/downloads/)
 - [PyQt5 5.x](https://www.riverbankcomputing.com/software/pyqt/download5)
 - PyOpenGL 3.x
