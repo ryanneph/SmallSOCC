@@ -15,14 +15,14 @@ python setup.py install
 ```
 ### Development
 #### Using virtualenv
-```
+```bash 
 git clone https://github.com/ryanneph/soc_control.git
-sudo apt-get -y install virtualenv virtualenvwrapper
+pip install virtualenv
 virtualenv soc_dev && source soc_dev/bin/activate
 cd soc_control && python setup.py develop
 ```
 #### Using Anaconda/Conda
-```
+```bash
 conda create -n soc_dev python=3
 conda activate soc_dev
 cd soc_control && python setup.py develop
