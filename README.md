@@ -11,7 +11,7 @@ Python package dependencies are handled during setup or can be installed manuall
 ### Installation
 ```
 git clone https://github.com/ryanneph/soc_control.git
-python setup.py install
+cd soc_control && python setup.py install
 ```
 ### Development
 #### Using virtualenv
