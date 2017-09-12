@@ -82,4 +82,4 @@ class LeafletBase(QQuickItem):
 
 
 # make LeafletBase accessible to qml
-qmlRegisterType(LeafletBase, 'LeafletBase', 1, 0, 'LeafletBase')
+qmlRegisterType(LeafletBase, 'com.soc.types.LeafletBase', 1, 0, 'LeafletBase')

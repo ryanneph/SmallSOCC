@@ -13,7 +13,7 @@ from os.path import dirname
 # We use QWidget to represent the window, QApplication as the non-vis container for the window
 from OpenGL import GL
 from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtQml import QQmlApplicationEngine
 
 from version import VERSION_FULL
@@ -23,7 +23,8 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 from hardware import HWSOC
-from leaflet import LeafletBase
+import leaflet
+import leafletassembly
 
 
 ####################################################################################################
@@ -31,7 +32,7 @@ from leaflet import LeafletBase
 if __name__ == '__main__':
     HWSOC(8)
 
-    app = QGuiApplication(sys.argv)
+    app = QApplication(sys.argv)
 
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("mainwindow_title", 'SOC_Controller - v{!s}'.format(VERSION_FULL))

@@ -1,6 +1,6 @@
 // Leaflet.qml
 import QtQuick 2.5
-import LeafletBase 1.0
+import com.soc.types.LeafletBase 1.0
 
 Item {
     id: leaflet
@@ -8,7 +8,8 @@ Item {
     property alias orientation: leaflet_base.orientation
     property alias direction: leaflet_base.direction
     property alias extension: leaflet_base.extension
-    property int   full_range: 1
+    property int   full_range: 0
+    property int   complementary_ext: 0
 
     x: 0; y: 0
     z: leaflet.orientation === LeafletBase.Horizontal ? 2 : 1
@@ -49,7 +50,8 @@ Item {
             width: leaflet.width
             height: leaflet.height
             border.color: "#b27c3e"
-            color: "#e09947"
+            property color base_color: "#e09947"
+            color: base_color
             opacity: 0.9
             anchors.right: {
                 if (leaflet.orientation === LeafletBase.Horizontal && leaflet.direction === LeafletBase.Positive) {
@@ -119,23 +121,40 @@ Item {
         drag.axis: leaflet.orientation === LeafletBase.Horizontal ? Drag.XAxis : Drag.YAxis
         property var dir: leaflet.direction === LeafletBase.Positive ? 1 : -1
 
-        drag.minimumX: isPositive() ? start.x : start.x + dir*full_range
-        drag.maximumX: isPositive() ? start.x + dir*full_range : start.x
-        drag.minimumY: isPositive() ? start.y : start.y + dir*full_range
-        drag.maximumY: isPositive() ? start.y + dir*full_range : start.y
+        drag.minimumX: {
+            if (leaflet.orientation === LeafletBase.Horizontal) {
+                return isPositive() ? start.x : start.x + dir*(full_range-complementary_ext)
+            } else { return 0 }
+        }
+        drag.maximumX: {
+            if (leaflet.orientation === LeafletBase.Horizontal) {
+                return isPositive() ? start.x + dir*(full_range-complementary_ext) : start.x
+            } else { return 0 }
+        }
+        drag.minimumY: {
+            if (leaflet.orientation === LeafletBase.Vertical) {
+                return isPositive() ? start.y : start.y + dir*(full_range-complementary_ext)
+            } else { return 0 }
+        }
+        drag.maximumY: {
+            if (leaflet.orientation === LeafletBase.Vertical) {
+                return isPositive() ? start.y + dir*(full_range-complementary_ext) : start.y
+            } else { return 0 }
+        }
+        // drag.minimumX: isPositive() ? start.x : start.x + dir*(full_range-complementary_ext)
+        // drag.maximumX: isPositive() ? start.x + dir*(full_range-complementary_ext) : start.x
+        // drag.minimumY: isPositive() ? start.y : start.y + dir*(full_range-complementary_ext)
+        // drag.maximumY: isPositive() ? start.y + dir*(full_range-complementary_ext) : start.y
 
-        // onPressed: {
-        //     rect_leaf.color = "#59616d"
-        //     // console.log(parent.x, parent.y)
-        //     // console.log(drag.minimumX, drag.maximumX, drag.minimumY, drag.maximumY)
-        // }
-        // onReleased: {
-        //     rect_leaf.color = "#67707F"
-        //     // if (leaflet.orientation === LeafletBase.Horizontal) {
-        //     //     leaflet.extension = parseInt(255*dir*(parent.x-parent.start.x)*1.0/(leaflet.full_range))
-        //     // } else {
-        //     //     leaflet.extension = parseInt(255*dir*(parent.y-parent.start.y)*1.0/(leaflet.full_range))
-        //     // }
-        // }
+        onPressed: {
+            rect_leaf.color = "#f1aa50"
+            console.log("drag.minX: " + drag.minimumX);
+            console.log("drag.maxX: " + drag.maximumX);
+            console.log("drag.minY: " + drag.minimumY);
+            console.log("drag.maxX: " + drag.maximumY);
+        }
+        onReleased: {
+            rect_leaf.color = rect_leaf.base_color
+        }
     }
 }
