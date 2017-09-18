@@ -23,5 +23,5 @@ class LeafletAssembly2by2(LeafletAssemblyBase, QQuickItem):
 
 
 # make accessible to qml
-qmlRegisterType(LeafletAssembly2by2, 'com.soc.types.LeafletAssemblyBase', 1, 0, 'LeafletAssembly2by2')
+qmlRegisterType(LeafletAssembly2by2, 'com.soc.types.LeafletAssemblies', 1, 0, 'LeafletAssembly2by2')
 

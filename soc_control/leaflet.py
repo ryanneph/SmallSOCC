@@ -4,7 +4,7 @@ from PyQt5.QtQml import qmlRegisterType
 from PyQt5.QtQuick import QQuickItem
 
 # leaflet type to be registered with QML (must be sub-class of QObject)
-class LeafletBase(QQuickItem):
+class Leaflet(QQuickItem):
     __min_ext = 0
     __max_ext = 255
 
@@ -18,18 +18,18 @@ class LeafletBase(QQuickItem):
     Q_ENUMS(Orientation)
     Q_ENUMS(Direction)
 
-    #  orientationChanged = pyqtSignal(Orientation, arguments=['orientation'])
-    #  directionChanged = pyqtSignal(Direction, arguments=['direction'])
+    orientationChanged = pyqtSignal(Orientation, arguments=['orientation'])
+    directionChanged = pyqtSignal(Direction, arguments=['direction'])
     extensionChanged = pyqtSignal([int], arguments=['extension'])
-    #  indexChanged = pyqtSignal([int], arguments=['index'])
+    indexChanged = pyqtSignal([int], arguments=['index'])
 
     def __init__(self, *args, **kwargs):
-        self._hwsoc = HWSOC()
         QQuickItem.__init__(self, **kwargs)
+        self._hwsoc = HWSOC()
         self._index = 0
         self._extension = 0
-        self._orientation = LeafletBase.Orientation.Horizontal
-        self._direction = LeafletBase.Direction.Positive
+        self._orientation = Leaflet.Orientation.Horizontal
+        self._direction = Leaflet.Direction.Positive
         #  self.extensionChanged.connect(self._commit_change)
 
     # extend QQuickItem::componentComplete()
@@ -37,7 +37,15 @@ class LeafletBase(QQuickItem):
         QQuickItem.componentComplete(self)
         self.extension = 0 # reset leaflets to home position
 
-    @pyqtProperty(Orientation) #, notify=orientationChanged)
+    @pyqtProperty(int, constant=True)
+    def min_extension(self):
+        return Leaflet.__min_ext
+
+    @pyqtProperty(int, constant=True)
+    def max_extension(self):
+        return Leaflet.__max_ext
+
+    @pyqtProperty(Orientation, notify=orientationChanged)
     def orientation(self):
         return self._orientation
 
@@ -45,7 +53,7 @@ class LeafletBase(QQuickItem):
     def orientation(self, val):
         self._orientation = val
 
-    @pyqtProperty(Direction) #, notify=directionChanged)
+    @pyqtProperty(Direction, notify=directionChanged)
     def direction(self):
         return self._direction
 
@@ -53,7 +61,7 @@ class LeafletBase(QQuickItem):
     def direction(self, val):
         self._direction = val
 
-    @pyqtProperty(int) #, notify=indexChanged)
+    @pyqtProperty(int, notify=indexChanged)
     def index(self):
         return self._index
 
@@ -69,8 +77,8 @@ class LeafletBase(QQuickItem):
     @extension.setter
     def extension(self, val):
         # bounds checking
-        if (val < LeafletBase.__min_ext): val = LeafletBase.__min_ext
-        elif (val > LeafletBase.__max_ext): val = LeafletBase.__max_ext
+        if (val < Leaflet.__min_ext): val = Leaflet.__min_ext
+        elif (val > Leaflet.__max_ext): val = Leaflet.__max_ext
         print('setting extension of leaf #{:d} to {:d}'.format(self.index, val))
         self._extension = val
         self._commit_change()
@@ -81,5 +89,5 @@ class LeafletBase(QQuickItem):
 
 
 
-# make LeafletBase accessible to qml
-qmlRegisterType(LeafletBase, 'com.soc.types.LeafletBase', 1, 0, 'LeafletBase')
+# make Leaflet accessible to qml
+qmlRegisterType(Leaflet, 'com.soc.types.Leaflets', 1, 0, 'Leaflet')

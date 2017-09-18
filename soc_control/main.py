@@ -35,6 +35,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("mainwindow_title", 'SOC_Controller - v{!s}'.format(VERSION_FULL))
+    engine.rootContext().setContextProperty("mainwindow_title", 'SOC Controller - v{!s}(alpha)'.format(VERSION_FULL))
     engine.load(QUrl(os.path.join(dirname(__file__), 'main.qml')))
     sys.exit(app.exec_()) # block until window is closed - event handler

@@ -6,15 +6,15 @@ ApplicationWindow {
     visible: true
     title: mainwindow_title // global property injection
     id: mainwindow
-    width: 600; height: 600
+    width: 1000; height: 800
     minimumHeight: height
     maximumHeight: height
     minimumWidth: width
     maximumWidth: width
     color: "white"
 
-    LeafletAssembly {
+    QLeafletAssembly2by2 {
         id: soc_display
-        width: 600; height: 600
+        width: 500; height: 500
     }
 }
