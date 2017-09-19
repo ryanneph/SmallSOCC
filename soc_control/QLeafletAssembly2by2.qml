@@ -4,7 +4,6 @@ import com.soc.types.Leaflets 1.0
 
 LeafletAssembly2by2 {
     id: assembly2by2
-    width: 600; height: 600;
     property color color_bg: "#aaaaaa"
     property color color_field: "#F0F6F8"
     clip: true
@@ -55,8 +54,7 @@ LeafletAssembly2by2 {
         orientation: Leaflet.Horizontal
         direction: Leaflet.Negative
         full_range: beambounds.width
-        complementary_ext: l5.extension
-        extension: l5.extension
+        // complementary_ext: l5.extension
 
         startpos.x: (parent.width/2) + (beambounds.width/2)
         startpos.y: (parent.height/2) - (beambounds.height/2)

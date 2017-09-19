@@ -4,18 +4,15 @@ import com.soc.types.Leaflets 1.0
 
 Leaflet {
     id: leaflet
-    property var dir: direction === Leaflet.Positive ? 1 : -1
-    property point startpos: Qt.point(0,0)
-    property int   full_range
-    property int   complementary_ext: 0
-    x: isHorizontal() ? parseInt(startpos.x+dir*full_range*(extension/Leaflet.max_extension)) : startpos.x
-    y: !isHorizontal() ? parseInt(startpos.y+dir*full_range*(extension/Leaflet.max_extension)) : startpos.y 
-    z: isHorizontal() ? 2 : 1
-
-    Component.onCompleted: { x = startpos.x; y = startpos.y; }
-
     function isHorizontal() { return orientation === Leaflet.Horizontal }
     function isPositive() { return direction === Leaflet.Positive }
+    property var dir: isPositive() ? 1 : -1
+    property point startpos
+    property int   full_range
+    property int   complementary_ext
+    x: isHorizontal() ? parseInt(startpos.x+dir*full_range*(extension/max_extension)) : startpos.x
+    y: !isHorizontal() ? parseInt(startpos.y+dir*full_range*(extension/max_extension)) : startpos.y 
+    z: isHorizontal() ? 2 : 1
 
     // extension: { return 0
         // if (orientation === Leaflet.Horizontal) {

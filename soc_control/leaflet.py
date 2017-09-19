@@ -30,12 +30,11 @@ class Leaflet(QQuickItem):
         self._extension = 0
         self._orientation = Leaflet.Orientation.Horizontal
         self._direction = Leaflet.Direction.Positive
-        #  self.extensionChanged.connect(self._commit_change)
 
     # extend QQuickItem::componentComplete()
     def componentComplete(self):
         QQuickItem.componentComplete(self)
-        self.extension = 0 # reset leaflets to home position
+        #  self.extension = 0 # reset leaflets to home position
 
     @pyqtProperty(int, constant=True)
     def min_extension(self):
@@ -67,7 +66,6 @@ class Leaflet(QQuickItem):
 
     @index.setter
     def index(self, val):
-        print('setting index to {:d}'.format(val))
         self._index = val
 
     @pyqtProperty(int, notify=extensionChanged)
@@ -79,11 +77,10 @@ class Leaflet(QQuickItem):
         # bounds checking
         if (val < Leaflet.__min_ext): val = Leaflet.__min_ext
         elif (val > Leaflet.__max_ext): val = Leaflet.__max_ext
-        print('setting extension of leaf #{:d} to {:d}'.format(self.index, val))
+        print('setting extension of leaflet #{:d} to {:d}'.format(self.index, val))
         self._extension = val
         self._commit_change()
 
-    #  @pyqtSlot(int)
     def _commit_change(self):
         self._hwsoc.set_position(self.index, self.extension)
 

@@ -13,7 +13,7 @@ from os.path import dirname
 # We use QWidget to represent the window, QApplication as the non-vis container for the window
 from OpenGL import GL
 from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtQml import QQmlApplicationEngine
 
 from version import VERSION_FULL
@@ -32,7 +32,7 @@ import leafletassembly
 if __name__ == '__main__':
     HWSOC(8)
 
-    app = QApplication(sys.argv)
+    app = QGuiApplication(sys.argv + ['-style', 'default'])
 
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("mainwindow_title", 'SOC Controller - v{!s}(alpha)'.format(VERSION_FULL))
