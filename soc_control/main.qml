@@ -58,35 +58,55 @@ ApplicationWindow {
                             id: listitem
                             height: 65
                             padding: 0
-                            width: seq_list_border.availableWidth-listview_sequence.spacing*2
+                            width: seq_list_border.availableWidth-listview_sequence.spacing*2 /* uniform look on all sides */
                             anchors.horizontalCenter: parent.horizontalCenter
+                            property color content_fgcolor: ListView.isCurrentItem ? "white" : "black" 
                             background: Rectangle { anchors.fill: parent; border.color: "#bbb"; radius: 5
-                                color: parent.ListView.isCurrentItem ? "steelblue" : "transparent"
+                                color: listitem.ListView.isCurrentItem ? "steelblue" : "transparent"
                             }
 
                             RowLayout {
                                 anchors.fill: parent
                                 spacing: 10
-                                Label { /* print index */
-                                    id: listitem_index_label
-                                    Layout.preferredWidth: 40
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: index;
-                                    color: listitem.ListView.isCurrentItem ? "#d9d9d9" : "gray"
-                                    font.pointSize: 16
+                                Item { /* print index and time */
+                                    Layout.preferredHeight: listitem.height
+                                    Layout.preferredWidth: 45
+                                    Layout.leftMargin: listview_sequence.spacing + parseInt(parent.spacing/2)
+                                    property color index_fgcolor: listitem.ListView.isCurrentItem ? "#d9d9d9" : "gray"
+                                    Label { /* print index */
+                                        id: listitem_index_label
+                                        height: parseInt(listitem.height*0.7)
+                                        anchors.left: parent.left;
+                                        anchors.right: parent.right
+                                        anchors.top: parent.top
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: index;
+                                        color: parent.index_fgcolor
+                                        font.pointSize: 16
+                                    }
+                                    Label { /* print timecode */
+                                        id: listitem_timecode_label
+                                        width: listitem_index_label.width
+                                        height: listitem.height - listitem_index_label.height
+                                        anchors.left: parent.left;
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: timecode
+                                        color: parent.index_fgcolor
+                                        font.pointSize: 9
+                                    }
                                 }
                                 Column { /* print content */
                                     id: listitem_content
                                     Layout.fillWidth: true
                                     anchors.verticalCenter: parent.verticalCenter
-                                    property color inactivecolor: "black"
-                                    property color activecolor: "white"
-                                    property color textcolor: listitem.ListView.isCurrentItem ? "white" : "black"
-                                    Text { color: parent.textcolor; text: "<b>Couch:</b> " + couch_angle + " deg, Gantry: " + gantry_angle + " deg" }
-                                    Text { color: parent.textcolor; text: "<b>desc:</b>  " + "\"Insert Description Here\"" }
-                                    Text { color: parent.textcolor; text: "<b>added:</b> " + "24 Sept. 2017" }
-                                    Text { color: parent.textcolor; text: "<b>type:</b>  " + "automatic" }
+                                    Text { color: listitem.content_fgcolor; text: "<b>Couch:</b> " + couch_angle + " deg, Gantry: " + gantry_angle + " deg" }
+                                    Text { color: listitem.content_fgcolor; text: "<b>desc:</b>  " + "\"" + description + "\"" }
+                                    Text { color: listitem.content_fgcolor; text: "<b>added:</b> " + date_created }
+                                    Text { color: listitem.content_fgcolor; text: "<b>type:</b>  " + type }
                                 }
                             }
                             MouseArea {
@@ -96,22 +116,7 @@ ApplicationWindow {
                         }
                     }
 
-                    model: ListModel {
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 0; gantry_angle: 45; }
-                        ListElement { couch_angle: 1; gantry_angle: 45; }
-                        ListElement { couch_angle: 2; gantry_angle: 45; }
-                        ListElement { couch_angle: 3; gantry_angle: 45; }
-                        ListElement { couch_angle: 4; gantry_angle: 45; }
-                    }
+                    model: SampleListModelData {}
                 }
             }
             Frame {
