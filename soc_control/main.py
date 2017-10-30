@@ -25,6 +25,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 from hardware import HWSOC
 import leaflet
 import leafletassembly
+import sequence
 
 
 ####################################################################################################
@@ -35,6 +36,11 @@ if __name__ == '__main__':
     app = QGuiApplication(sys.argv + ['-style', 'default'])
 
     engine = QQmlApplicationEngine()
+
+    # set versioned title
     engine.rootContext().setContextProperty("mainwindow_title", 'SOC Controller - v{!s}(alpha)'.format(VERSION_FULL))
+    # make seq. list model accessible to qml-listview
+    engine.rootContext().setContextProperty("SequenceListModel", sequence.samplelistmodel )
+
     engine.load(QUrl(os.path.join(dirname(__file__), 'main.qml')))
     sys.exit(app.exec_()) # block until window is closed - event handler
