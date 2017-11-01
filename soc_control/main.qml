@@ -23,16 +23,58 @@ ApplicationWindow {
     RowLayout {
       id: upper_half
       spacing: controls_container.anchors.margins
+      ColumnLayout {
+        id: ul_col
 
-      QLeafletAssembly2by2 {
-        id: soc_display
-        anchors.top: parent.top
-        Layout.fillWidth: true /* dynamically size */
-        Layout.preferredHeight: width /* keep square */
-        Layout.minimumWidth: 200
-        Layout.maximumWidth: 500
+        QLeafletAssembly2by2 { /* Leaflet Display */
+          id: soc_display
+          anchors.top: parent.top
+          Layout.fillWidth: true /* dynamically size */
+          Layout.preferredHeight: width /* keep square */
+          Layout.minimumWidth: 200
+          Layout.maximumWidth: 500
+          draggable: false
+        }
+        ColumnLayout {
+          Layout.fillWidth: true
+          Item {
+            id: leaflet_editor
+            Layout.fillHeight: true
+            RowLayout {
+              anchors.fill: parent
+              Label {
+                text: "Extension:"
+                font.pixelSize: 16
+              }
+              SpinBox {
+                id: leaflet_spinbox
+                objectName: "leaflet_spinbox"
+                editable: true
+                from: 1
+                to: soc_display.nleaflets
+                value: to
+                enabled: false
+              }
+              SpinBox {
+                id: ext_spinbox
+                objectName: "ext_spinbox"
+                editable: true
+                from: 0
+                to: soc_display.max_extension
+                value: to
+                enabled: false
+              }
+              Button { /* set ext */
+                text: "set"
+                font.pointSize: 12
+                Layout.preferredWidth: 50
+                enabled: false
+              }
+            }
+          }
+        }
       }
-      Pane {
+      Pane { /* Sequence List + Buttons */
         id: seq_list_border
         clip: true
         Layout.fillHeight: true
@@ -53,7 +95,7 @@ ApplicationWindow {
           ScrollBar.vertical: ScrollBar {}
 
           delegate: QSequenceDelegate {}
-          model: SequenceListModel
+          model: SequenceListModel  // see main.py for contextvariable setting
         }
       }
       Pane {
@@ -76,31 +118,44 @@ ApplicationWindow {
             Layout.preferredWidth: parent.btn_width
             height: parent.btn_height
             font.pointSize: 12
+            onClicked: {
+              if (SequenceListModel.moveRows(listview_sequence.currentIndex, 1, listview_sequence.currentIndex-1)) {
+                listview_sequence.currentIndex = listview_sequence.currentIndex-1;
+              }
+            }
           }
-          Button { /* insert before */
-            text: "\u2B11+"
-            Layout.preferredWidth: parent.btn_width
-            height: parent.btn_height
-            font.pointSize: 20
-          }
+          // Button { /* insert before */
+          //   text: "\u2B11+"
+          //   Layout.preferredWidth: parent.btn_width
+          //   height: parent.btn_height
+          //   font.pointSize: 20
+          //   onClicked: SequenceListModel.insertRows(listview_sequence.currentIndex, 1)
+          // }
           Button { /* insert after */
-            text: "\u2B10+"
+            // text: "\u2B10+"
+            text: "+"
             Layout.preferredWidth: parent.btn_width
             height: parent.btn_height
             font.pointSize: 20
+            onClicked: SequenceListModel.insertRows(listview_sequence.currentIndex+1, 1)
           }
           Button { /* remove */
             text: "\u274C"
             Layout.preferredWidth: parent.btn_width
             height: parent.btn_height
             font.pointSize: 12
+            onClicked: SequenceListModel.removeRows(listview_sequence.currentIndex, 1)
           }
-          Button {
-            /* move down */
+          Button { /* move down */
             text: "\u25BC"
             Layout.preferredWidth: parent.btn_width
             height: parent.btn_height
             font.pointSize: 12
+            onClicked: {
+              if (SequenceListModel.moveRows(listview_sequence.currentIndex, 1, listview_sequence.currentIndex+1)) {
+                listview_sequence.currentIndex = listview_sequence.currentIndex+1;
+              }
+            }
           }
         }
       }
@@ -117,28 +172,6 @@ ApplicationWindow {
         color: "transparent"
       }
 
-      RowLayout {
-        anchors.fill: parent
-
-        Item {
-          id: leaflet_editor
-          Layout.fillHeight: true
-          RowLayout {
-            anchors.fill: parent
-            SpinBox {
-              editable: true
-              from: 0
-              to: soc_display.max_extension
-              value: to
-            }
-            Button { /* set ext */
-              text: "set"
-              font.pointSize: 12
-              Layout.preferredWidth: 50
-            }
-          }
-        }
-      }
     }
   }
 }

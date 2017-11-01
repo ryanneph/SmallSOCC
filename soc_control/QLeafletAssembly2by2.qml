@@ -7,6 +7,8 @@ LeafletAssembly2by2 {
   property color color_bg: "#aaaaaa"
   property color color_field: "#F0F6F8"
   property alias max_extension: l0.max_extension
+  property bool draggable: false
+  readonly property int nleaflets: 8
   clip: true
 
   Rectangle {
@@ -55,12 +57,13 @@ LeafletAssembly2by2 {
     orientation: Leaflet.Horizontal
     direction: Leaflet.Negative
     full_range: beambounds.width
+    draggable: parent.draggable
     // complementary_ext: l5.extension
 
     startpos.x: (parent.width/2) + (beambounds.width/2)
     startpos.y: (parent.height/2) - (beambounds.height/2)
   }
-  QLeaflet{
+  QLeaflet {
     id: l1
     index: 1
     width: beambounds.width
@@ -68,11 +71,12 @@ LeafletAssembly2by2 {
     orientation: Leaflet.Horizontal
     direction: Leaflet.Negative
     full_range: beambounds.width
+    draggable: parent.draggable
 
     startpos.x: (parent.width/2) + (beambounds.width/2)
     startpos.y: (parent.height/2)
   }
-  QLeaflet{
+  QLeaflet {
     id: l2
     index: 2
     width: beambounds.width/2
@@ -80,11 +84,12 @@ LeafletAssembly2by2 {
     orientation: Leaflet.Vertical
     direction: Leaflet.Negative
     full_range: beambounds.height
+    draggable: parent.draggable
 
     startpos.x: (parent.width/2)
     startpos.y: (parent.height/2) + (beambounds.height/2)
   }
-  QLeaflet{
+  QLeaflet {
     id: l3
     index: 3
     width: beambounds.width/2
@@ -92,11 +97,12 @@ LeafletAssembly2by2 {
     orientation: Leaflet.Vertical
     direction: Leaflet.Negative
     full_range: beambounds.height
+    draggable: parent.draggable
 
     startpos.x: (parent.width/2) - (beambounds.width/2)
     startpos.y: (parent.height/2) + (beambounds.height/2)
   }
-  QLeaflet{
+  QLeaflet {
     id: l4
     index: 4
     width: beambounds.width
@@ -104,11 +110,12 @@ LeafletAssembly2by2 {
     orientation: Leaflet.Horizontal
     direction: Leaflet.Positive
     full_range: beambounds.width
+    draggable: parent.draggable
 
     startpos.x: (parent.width/2) - (3*beambounds.width/2)
     startpos.y: (parent.height/2)
   }
-  QLeaflet{
+  QLeaflet {
     id: l5
     index: 5
     width: beambounds.width
@@ -116,12 +123,13 @@ LeafletAssembly2by2 {
     orientation: Leaflet.Horizontal
     direction: Leaflet.Positive
     full_range: beambounds.width
+    draggable: parent.draggable
     complementary_ext: l0.extension
 
     startpos.x: (parent.width/2) - (3*beambounds.width/2)
     startpos.y: (parent.height/2) - (beambounds.height/2)
   }
-  QLeaflet{
+  QLeaflet {
     id: l6
     index: 6
     width: beambounds.width/2
@@ -129,11 +137,12 @@ LeafletAssembly2by2 {
     orientation: Leaflet.Vertical
     direction: Leaflet.Positive
     full_range: beambounds.height
+    draggable: parent.draggable
 
     startpos.x: (parent.width/2) - (beambounds.width/2)
     startpos.y: (parent.height/2) - (3*beambounds.height/2)
   }
-  QLeaflet{
+  QLeaflet {
     id: l7
     index: 7
     width: beambounds.width/2
@@ -141,6 +150,7 @@ LeafletAssembly2by2 {
     orientation: Leaflet.Vertical
     direction: Leaflet.Positive
     full_range: beambounds.height
+    draggable: parent.draggable
 
     startpos.x: (parent.width/2)
     startpos.y: (parent.height/2) - (3*beambounds.height/2)

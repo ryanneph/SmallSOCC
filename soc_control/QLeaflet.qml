@@ -10,6 +10,7 @@ Leaflet {
   property point startpos
   property int   full_range
   property int   complementary_ext
+  property bool  draggable: false
   x: isHorizontal() ? parseInt(startpos.x+dir*full_range*(extension/max_extension)) : startpos.x
   y: !isHorizontal() ? parseInt(startpos.y+dir*full_range*(extension/max_extension)) : startpos.y
   z: isHorizontal() ? 2 : 1
@@ -102,6 +103,7 @@ Leaflet {
   MouseArea {
     id: mouseArea
     anchors.fill: compound
+    enabled: parent.draggable
     drag.target: parent
     drag.axis: isHorizontal() ? Drag.XAxis : Drag.YAxis
 

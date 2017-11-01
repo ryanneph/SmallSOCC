@@ -1,0 +1,79 @@
+{
+  "SequenceList":[
+    {
+      "date_created":"2017 Nov 01 12:19:35",
+      "description":"",
+      "extension_list":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rot_couch_deg":5,
+      "rot_gantry_deg":0,
+      "timecode_ms":1500,
+      "type":"Manual"
+    },
+    {
+      "date_created":"2017 Nov 01 12:19:35",
+      "description":"descriptive text2",
+      "extension_list":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rot_couch_deg":12,
+      "rot_gantry_deg":120,
+      "timecode_ms":1500,
+      "type":"Auto"
+    },
+    {
+      "date_created":"2017 Nov 01 12:19:35",
+      "description":"descriptive text3",
+      "extension_list":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rot_couch_deg":24,
+      "rot_gantry_deg":25,
+      "timecode_ms":1500,
+      "type":"Auto"
+    },
+    {
+      "date_created":"2017 Nov 01 12:19:35",
+      "description":"descriptive text4",
+      "extension_list":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rot_couch_deg":0,
+      "rot_gantry_deg":45,
+      "timecode_ms":1500,
+      "type":"Auto"
+    }
+  ],
+  "metadata":{
+    "generated_on":"2017 Nov 01 12:19:35"
+  }
+}

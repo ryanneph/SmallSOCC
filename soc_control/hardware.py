@@ -7,6 +7,7 @@ _BAUD = 115200
 _USB_HID = '239A:8011'  # hardwareID for detecting device
 
 class HWSOC(Borg):
+    """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
     _shared_state = {}
 
     def __init__(self, nleaflets=None):
@@ -47,7 +48,6 @@ class HWSOC(Borg):
             self._fserial = serial.Serial(PORT, _BAUD, timeout=0, writeTimeout=0)
         except:
             self._activate_emulator_mode()
-            return
 
     @property
     def nleaflets(self):
@@ -66,8 +66,7 @@ class HWSOC(Borg):
         self._fserial.reset_input_buffer()
 
     def get_position(self, idx):
-        """Feedback mechanism not yet implemented in hardware"""
-        pass
+        raise NotImplementedError('Feedback mechanism not yet implemented in hardware')
 
     def go_home(self):
         for i in range(self.nleaflets):
