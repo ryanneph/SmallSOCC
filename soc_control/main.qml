@@ -35,7 +35,7 @@ ApplicationWindow {
           Layout.maximumWidth: 500
           draggable: false
         }
-        ColumnLayout {
+        ColumnLayout { /* Leaflet Positions Controls */
           Layout.fillWidth: true
           Item {
             id: leaflet_editor
@@ -74,91 +74,7 @@ ApplicationWindow {
           }
         }
       }
-      Pane { /* Sequence List + Buttons */
-        id: seq_list_border
-        clip: true
-        Layout.fillHeight: true
-        Layout.fillWidth: true
-        Layout.minimumWidth: 270
-        property int borderwidth: 2
-        padding: borderwidth
-        background: Rectangle { anchors.fill: parent; border.color: "black"; border.width: parent.borderwidth; color: "#eee" }
-
-        ListView {
-          id: listview_sequence
-          orientation: Qt.Vertical
-          verticalLayoutDirection: ListView.TopToBottom
-          spacing: 2
-          focus: true
-          currentIndex: 0
-          anchors.fill: parent
-          ScrollBar.vertical: ScrollBar {}
-
-          delegate: QSequenceDelegate {}
-          model: SequenceListModel  // see main.py for contextvariable setting
-        }
-      }
-      Pane {
-        id: button_pane
-        height: list_buttons.height + 2*padding
-        anchors.top: parent.top
-        padding: 3
-        background: Rectangle { anchors.fill: parent; color: "#333" }
-        ColumnLayout {
-          id: list_buttons
-          property int btn_width: 65
-          property int btn_height: 50
-          property color btn_bgcolor: "#555"
-          property color btn_fgcolor: "#ededed"
-          width: btn_width
-          spacing: button_pane.padding
-
-          Button { /* move up */
-            text: "\u25B2"
-            Layout.preferredWidth: parent.btn_width
-            height: parent.btn_height
-            font.pointSize: 12
-            onClicked: {
-              if (SequenceListModel.moveRows(listview_sequence.currentIndex, 1, listview_sequence.currentIndex-1)) {
-                listview_sequence.currentIndex = listview_sequence.currentIndex-1;
-              }
-            }
-          }
-          // Button { /* insert before */
-          //   text: "\u2B11+"
-          //   Layout.preferredWidth: parent.btn_width
-          //   height: parent.btn_height
-          //   font.pointSize: 20
-          //   onClicked: SequenceListModel.insertRows(listview_sequence.currentIndex, 1)
-          // }
-          Button { /* insert after */
-            // text: "\u2B10+"
-            text: "+"
-            Layout.preferredWidth: parent.btn_width
-            height: parent.btn_height
-            font.pointSize: 20
-            onClicked: SequenceListModel.insertRows(listview_sequence.currentIndex+1, 1)
-          }
-          Button { /* remove */
-            text: "\u274C"
-            Layout.preferredWidth: parent.btn_width
-            height: parent.btn_height
-            font.pointSize: 12
-            onClicked: SequenceListModel.removeRows(listview_sequence.currentIndex, 1)
-          }
-          Button { /* move down */
-            text: "\u25BC"
-            Layout.preferredWidth: parent.btn_width
-            height: parent.btn_height
-            font.pointSize: 12
-            onClicked: {
-              if (SequenceListModel.moveRows(listview_sequence.currentIndex, 1, listview_sequence.currentIndex+1)) {
-                listview_sequence.currentIndex = listview_sequence.currentIndex+1;
-              }
-            }
-          }
-        }
-      }
+      QSequenceList {} /* ListView + Buttons */
     }
     Pane {
       id: bottom_frame

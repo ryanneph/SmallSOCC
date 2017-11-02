@@ -32,7 +32,13 @@ parent = os.path.abspath(dirname(dirname(__file__)))
 TEST_FILES = os.path.join(parent, 'test_files')
 TEMP = os.path.join(parent, 'temp')
 
-samplelistmodel = sequence.SequenceListModel.readFromJson(os.path.join(TEST_FILES, 'test_output.json'))
+# load example sequence, otherwise blank
+try:
+    samplelistmodel = sequence.SequenceListModel.readFromJson(os.path.join(TEST_FILES, 'test_output.json'))
+except:
+    samplelistmodel = sequence.SequenceListModel()
+
+
 def preExit():
     """ occurs just before Qt application exits (bound to QGuiApplication.aboutToQuit() signal) """
     samplelistmodel.writeToJson(os.path.join(TEMP, 'test_write.json'))
