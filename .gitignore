@@ -1,3 +1,4 @@
 *.qmlc
 *.egg-info/*
 temp/*
+*.jsc

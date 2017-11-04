@@ -32,16 +32,27 @@ parent = os.path.abspath(dirname(dirname(__file__)))
 TEST_FILES = os.path.join(parent, 'test_files')
 TEMP = os.path.join(parent, 'temp')
 
+# TODO: DEBUG
 # load example sequence, otherwise blank
 try:
     samplelistmodel = sequence.SequenceListModel.readFromJson(os.path.join(TEST_FILES, 'test_output.json'))
-except:
-    samplelistmodel = sequence.SequenceListModel()
-
+except Exception as e:
+    print('FAILED TO READ DEBUG JSON FILE : {!s}'.format(e))
+    # SAMPLE ITEMS FOR DEBUG
+    from sequence import SequenceItem
+    sample_sequenceitems = [
+        SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=1500, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
+        SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
+        SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=1500, description="descriptive text3"),
+        SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=1500, description="descriptive text4"),
+    ]
+    samplelistmodel = sequence.SequenceListModel(elements=sample_sequenceitems)
+    #  samplelistmodel.writeToJson('test_output.json')
 
 def preExit():
     """ occurs just before Qt application exits (bound to QGuiApplication.aboutToQuit() signal) """
     samplelistmodel.writeToJson(os.path.join(TEMP, 'test_write.json'))
+# TODO: END DEBUG
 
 ####################################################################################################
 # Start GUI

@@ -12,8 +12,8 @@ import copy
 import json
 import json_serializer
 from datetime import datetime
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt5 import QtCore, QtQml
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, pyqtProperty
 from PyQt5.QtQml import qmlRegisterType
 from sequence_members import _sequenceitem_public_members, SequenceItemType, datetimefmt
 
@@ -27,7 +27,42 @@ def _getEnumMemberFromInt(enum: Enum, idx: int):
     return list(enum.__members__.values())[idx]
 
 
-class SequenceItem():
+#  # TODO: NOT YET IMPLEMENTED
+#  # Define factories that produce getter/setter methods to register as QML properties
+#  def getFactory(key):
+#      def getter(self):
+#          return QtCore.QVariant(self._members[key].basicvalue)
+#      return getter
+
+#  def setFactory(key):
+#      def setter(self, val: object):
+#          self._members[key].value = val
+#      return setter
+
+#  # class decorator that registers Named Members as class properties accessible to QML
+#  class register_qml_properties:
+#      def __init__(self, property_map):
+#          print('starting to decorate')
+#          self.property_map = property_map
+
+#      def __call__(self, cls):
+#          print('done decorating')
+#          def constructor(**kwargs):
+#              print("constructing class")
+#              cls(**kwargs)
+#              print("registering properties")
+#              #  self.register(cls)
+#              return cls
+#          return constructor
+
+#      def register(self, cls):
+#          """ register NamedMembers as accessible properties to qml engine """
+#          for k, v in self.property_map.items():
+#              print('registering property with qml: {!s} {}'.format(type(v.basicvalue), k))
+#              setattr(cls, str(k), pyqtProperty(type(v.basicvalue), fget=getFactory(k), fset=setFactory(k)))
+
+#  @register_qml_properties(_sequenceitem_public_members)
+class SequenceItem(QtCore.QObject):
     """ Backend representation for distinct setting of leaflet positions, beam angles,
     and occurence time in a treatment plan """
 
@@ -36,6 +71,7 @@ class SequenceItem():
         Keyword Args:
             All valid kwargs are detailed in _sequenceitem_public_members
         """
+        QtCore.QObject.__init__(self, None)
         # private members
         self._members = copy.deepcopy(_sequenceitem_public_members)
 
@@ -49,6 +85,7 @@ class SequenceItem():
 
             # set from kwargs
             for k in self._members.keys():
+                print('setting self._members[{!s}] to {!s}'.format(k, kwargs[k]))
                 try: self._members[k].value = kwargs[k]
                 except: pass
 
@@ -77,6 +114,37 @@ class SequenceItem():
         self = cls(**d)
         return self
 
+    # permit javascript/qml to access NamedMember from map of members
+    @pyqtSlot(QtCore.QVariant, result=QtCore.QVariant)
+    @pyqtSlot(result=QtCore.QVariant)
+    def get(self, key: object=None):
+        if not key:
+            # return map of all member data
+            return QtCore.QVariant({k: v.basicvalue for k,v in self._members.items()})
+        if key not in self._members:
+            return None
+        return QtCore.QVariant(self._members[key].basicvalue)
+
+    @pyqtSlot(QtCore.QVariant, QtCore.QVariant, result=bool)
+    @pyqtSlot(QtCore.QVariant, result=bool)
+    def set(self, key: object=None, val: object=None):
+        if isinstance(key, QtQml.QJSValue):
+            key = key.toVariant()
+        if isinstance(val, QtQml.QJSValue):
+            val = val.toVariant()
+
+        print(type(key), type(val))
+        if val:
+            print(f'setting new value for \"{key}\": {val}')
+            self._members[key].value = val
+        elif key:
+            for k, v in key.items():
+                print(type(k), type(v))
+                print(f'setting nvw value for \"{k}\": {v}')
+                self._members[k].value = v
+        else: return False
+        return True
+
 
 class SequenceListModel(QtCore.QAbstractListModel):
     """ Model for manipulating an ordered list of SequenceItems from QML ListView """
@@ -86,23 +154,32 @@ class SequenceListModel(QtCore.QAbstractListModel):
         QtCore.QAbstractListModel.__init__(self, None)
         try:
             elements = kwargs['elements']
-            self._elements = elements
+            self._items = elements
         except:
-            self._elements = []
+            self._items = []
 
     # Virtual Base Method
+    @pyqtSlot(QtCore.QModelIndex, result=int)
     def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self._elements)
+        return len(self._items)
+
+    @pyqtSlot(int, result=QtCore.QObject)
+    def getItem(self, index: int):
+        if index >= len(self._items):
+            return None
+        return self._items[index]
 
     # Virtual Base Method
+    @pyqtSlot(QtCore.QModelIndex, int, result=QtCore.QVariant)
     def data(self, index: QtCore.QModelIndex, role: int=Qt.DisplayRole):
         """ Get data item indexed by index.row() and member indicated by role """
+        #  print("trying to get {}".format(_getEnumMemberFromInt(SequenceUserRoles, role-Qt.UserRole-1)))
         if not index.isValid(): return None
-        if index.row() > len(self._elements): return None
+        if index.row() > len(self._items): return None
         if role == Qt.DisplayRole or role == Qt.EditRole:
-            return self._elements[index.row()]
+            return self._items[index.row()]
         if Qt.UserRole < role < Qt.UserRole+len(SequenceUserRoles.__members__)+1:
-            sequenceitem = self._elements[index.row()]
+            sequenceitem = self._items[index.row()]
             val = sequenceitem._members[_getEnumMemberFromInt(SequenceUserRoles, role-Qt.UserRole-1).name].basicvalue
             return val
         return None
@@ -126,7 +203,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.layoutAboutToBeChanged.emit()
         self.beginInsertRows(parent, row, row+count-1)
         for i in range(count):
-            self._elements.insert(row+i, SequenceItem())
+            self._items.insert(row+i, SequenceItem())
         self.endInsertRows()
         self.layoutChanged.emit()
         return True
@@ -136,7 +213,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
     def removeRows(self, row: int, count: int, parent=QtCore.QModelIndex()):
         """ remove a number of rows from model """
         self.beginRemoveRows(QtCore.QModelIndex(), row, row+count-1)
-        del self._elements[row:row+count]
+        del self._items[row:row+count]
         self.endRemoveRows()
         return True
 
@@ -144,8 +221,8 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(int, int, int, result=bool)
     def moveRows(self, sourceRow: int, count: int, destinationChild: int):
         """ Move sourceRow->sourceRow+count to destinationChild and trigger view refresh """
-        if (sourceRow < 0 or len(self._elements) <= sourceRow) \
-        or (destinationChild < 0 or len(self._elements) <= destinationChild):
+        if (sourceRow < 0 or len(self._items) <= sourceRow) \
+        or (destinationChild < 0 or len(self._items) <= destinationChild):
             return False
         if count > 1:
             raise NotImplementedError(f'{__name__} is not yet implemented for count > 1')
@@ -153,7 +230,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.layoutAboutToBeChanged.emit()
         self.beginMoveRows(self.index(sourceRow), sourceRow, count, self.index(destinationChild), destinationChild)
         for i in range(count):
-            self._elements.insert(destinationChild, self._elements.pop(sourceRow+i))
+            self._items.insert(destinationChild, self._items.pop(sourceRow+i))
             #  print(f'moving from {sourceRow} to {destinationChild}')
         self.endMoveRows()
         self.layoutChanged.emit()
@@ -162,37 +239,51 @@ class SequenceListModel(QtCore.QAbstractListModel):
     # Virtual Base Method
     def setData(self, index: QtCore.QModelIndex, value: QtCore.QVariant, role: int=Qt.EditRole):
         """ modify the value of data object at index """
-        if not index.isValid() or role != Qt.EditRole:
-            return False
+        if not index.isValid():
+            return None
 
-        self._elements[index.row()] = value
-        self.dataChanged.emit(index, index)
-        return True
+        if role == Qt.EditRole:
+            self._items[index.row()] = value
+            self.dataChanged.emit(index, index)
+            return True
+
+        if Qt.UserRole<role<Qt.UserRole+len(SequenceUserRoles.__members__)+1:
+            print('setting for role {!s}'.format(_getEnumMemberFromInt(SequenceUserRoles, role)))
+            return True
+
+        return None
 
     # Virtual Base Method
+    @pyqtSlot()
     def roleNames(self):
         """ Returns dict mapping all possible roles to their unique integers
             A role should be defined for every member that will be accessed by a QML Delegate """
         hashmap = {e.value: bytes(e.name, 'ascii') for e in SequenceUserRoles.__members__.values() }
         return hashmap
 
+    @pyqtSlot(str, result=bool)
     def writeToJson(self, fname: str):
         """ write all member vars to json for later recall """
-        memlist = []
-        for mem in self._elements:
-            memlist.append(mem.packDict())
+        try:
+            memlist = []
+            for mem in self._items:
+                memlist.append(mem.packDict())
 
-        # wrap with header
-        d = {'metadata': {'generated_on': datetime.now().strftime(datetimefmt)},
-             'SequenceList': memlist }
+            # wrap with header
+            d = {'metadata': {'generated_on': datetime.now().strftime(datetimefmt)},
+                 'SequenceList': memlist }
 
-        #  js = json_serializer.to_json(d)
-        js = json.dumps(d, indent=2, separators=(',', ':'), sort_keys=True)
+            #  js = json_serializer.to_json(d)
+            js = json.dumps(d, indent=2, separators=(',', ':'), sort_keys=True)
 
-        with open(fname, 'w') as f:
-            f.write(js)
+            with open(fname, 'w') as f:
+                f.write(js)
+        except: return False
+
+        return True
 
     @classmethod
+    @pyqtSlot(str, result=bool)
     def readFromJson(cls, fname):
         with open(fname, 'r') as f:
             d = json.load(f)
@@ -204,21 +295,8 @@ class SequenceListModel(QtCore.QAbstractListModel):
         except Exception as e:
             raise RuntimeError(f"Error in {cls.__name__}.readFromJson(): failed to read SequenceList from file \"{fname}\"")
 
-        return SequenceListModel(elements=seqitems)
+        a = SequenceListModel(elements=seqitems)
+        return a
 
 # Necessary to make this type accessible from QML
 #  qmlRegisterType(SequenceListModel, 'com.soc.types.SequenceListModel', 1, 0, 'SequenceListModel')
-
-
-####################################################################################################
-# TODO Replace with xml/ini/json load method
-## SAMPLE ITEMS FOR DEBUG
-#  sample_sequenceitems = [
-#      SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=1500, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
-#      SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
-#      SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=1500, description="descriptive text3"),
-#      SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=1500, description="descriptive text4"),
-#  ]
-#  samplelistmodel = SequenceListModel(elements=sample_sequenceitems)
-#  samplelistmodel.writeToJson('test_output.json')
-

@@ -1,6 +1,8 @@
 import QtQuick 2.5
 import QtQuick.Controls 2.0
+import QtQml.Models 2.2
 import QtQuick.Layouts 1.3
+import "dynamicqml.js" as DynamicQML
 
 RowLayout {
   Pane { /* Sequence List */
@@ -23,79 +25,90 @@ RowLayout {
       anchors.fill: parent
       ScrollBar.vertical: ScrollBar {}
 
-      delegate: QSequenceDelegate {}
       model: SequenceListModel  // see main.py for contextvariable setting
+      delegate: QSequenceDelegate {}
     }
   }
 
 
 
-  Pane { /* vstack of ListView buttons */
-    id: btn_pane
-    height: btn_height*list_buttons.length
+  /* user props */
+  property int btn_width: 45
+  property int btn_height: 45
+  ColumnLayout {
+    id: list_buttons
+    clip: true
+    spacing: -1*children[0].borderwidth
     width: btn_width
-    anchors.top: parent.top
-    padding: 2
-    background: Rectangle { anchors.fill: parent; color: "#333" }
+    Layout.alignment: Qt.AlignTop
 
-    /* user props */
-    property int btn_width: 65
-    property int btn_height: 50
-    property color btn_bgcolor: "#555"
-    property color btn_fgcolor: "#ededed"
-    property font btn_font: Qt.font({ pointSize: 12, bold: true})
-
-    ColumnLayout {
-      id: list_buttons
-      spacing: btn_pane.padding
-
-      Button { /* move up */
-        id: btn_moveup
-        text: "\u25B2"
-        font.pointSize: 12
-        onClicked: {
-          if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex-1)) {
-            lvseq.currentIndex = lvseq.currentIndex-1;
-          }
+    QStylizedButton { /* move up */
+      Layout.preferredHeight: btn_height
+      Layout.fillWidth: true
+      text: "\u25B2"
+      font.pointSize: 12
+      onClicked: {
+        if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex-1)) {
+          lvseq.currentIndex = lvseq.currentIndex-1;
         }
       }
-      // Button { /* insert before */
-      //   text: "\u2B11+"
-      //   font.pointSize: 20
-      //   onClicked: SequenceListModel.insertRows(lvseq.currentIndex, 1)
-      // }
-      Button { /* insert after */
-        // text: "\u2B10+"
-        text: "+"
-        font.pointSize: 20
-        onClicked: SequenceListModel.insertRows(lvseq.currentIndex+1, 1)
-      }
-      Button { /* remove */
-        text: "X"
-        font: btn_pane.btn_font
-        onClicked: SequenceListModel.removeRows(lvseq.currentIndex, 1)
-      }
-      Button { /* move down */
-        id: btn_movedown
-        text: "\u25BC"
-        font.pointSize: 12
-        onClicked: {
-          if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex+1)) {
-            lvseq.currentIndex = lvseq.currentIndex+1;
-          }
-        }
-      }
-      Button { /* Load JSON */
-        text: "Load"
-        font: btn_pane.btn_font
-        onClicked: null
-      }
-      Button { /* Load JSON */
-        text: "Save"
-        font: btn_pane.btn_font
-        onClicked: null
-      }
-
     }
+    // QStylizedButton { /* insert before */
+    // Layout.preferredHeight: btn_height
+    // Layout.fillWidth: true
+    //   text: "\u2B11+"
+    //   font.pointSize: 20
+    //   onClicked: SequenceListModel.insertRows(lvseq.currentIndex, 1)
+    // }
+    QStylizedButton { /* insert after */
+      Layout.preferredHeight: btn_height
+      Layout.fillWidth: true
+      // text: "\u2B10+"
+      text: "+"
+      font.pointSize: 20
+      onClicked: SequenceListModel.insertRows(lvseq.currentIndex+1, 1)
+    }
+    QStylizedButton { /* remove */
+      Layout.preferredHeight: btn_height
+      Layout.fillWidth: true
+      text: "X"
+      onClicked: SequenceListModel.removeRows(lvseq.currentIndex, 1)
+    }
+    QStylizedButton { /* move down */
+      Layout.preferredHeight: btn_height
+      Layout.fillWidth: true
+      text: "\u25BC"
+      font.pointSize: 12
+      onClicked: {
+        if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex+1)) {
+          lvseq.currentIndex = lvseq.currentIndex+1;
+        }
+      }
+    }
+    QStylizedButton { /* Edit Item Data */
+      Layout.preferredHeight: btn_height
+      Layout.fillWidth: true
+      text: "Edit"
+      onClicked: {
+        // Access SequenceItem properties through lvseq.model.get(lvseq.currentIndex)[property]
+        var d = DynamicQML.createModalDialog(mainwindow, "QEditDialog.qml");
+        var row = lvseq.currentIndex;
+        var modelData = lvseq.model.getItem(row).get();
+        console.debug(Object.getOwnPropertyNames(modelData));
+        d.formdata = {
+          "rot_gantry_deg": modelData.rot_couch_deg,
+          "rot_couch_deg":  modelData.rot_gantry_deg,
+          "description":    modelData.description
+        };
+        d.open();
+        d.onSubmitted.connect( function(newdata) {
+          console.debug("couch:"+newdata.rot_couch_deg+" gantry:"+newdata.rot_gantry_deg+" desc:"+newdata.description);
+          if (lvseq.model.getItem(row).set(newdata)) {
+            console.debug("NEED TO UPDATE VIEW")
+          }
+        } );
+      }
+    }
+
   }
 }
