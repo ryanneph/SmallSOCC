@@ -35,7 +35,7 @@ TEMP = os.path.join(parent, 'temp')
 # TODO: DEBUG
 # load example sequence, otherwise blank
 try:
-    samplelistmodel = sequence.SequenceListModel.readFromJson(os.path.join(TEST_FILES, 'test_output.json'))
+    samplelistmodel = sequence.SequenceListModel.fromJson(os.path.join(TEST_FILES, 'test_output.json'))
 except Exception as e:
     print('FAILED TO READ DEBUG JSON FILE : {!s}'.format(e))
     # SAMPLE ITEMS FOR DEBUG

@@ -85,9 +85,9 @@ class SequenceItem(QtCore.QObject):
 
             # set from kwargs
             for k in self._members.keys():
-                print('setting self._members[{!s}] to {!s}'.format(k, kwargs[k]))
+                #  print('setting self._members[{!s}] to {!s}'.format(k, kwargs[k]))
                 try: self._members[k].value = kwargs[k]
-                except: pass
+                except: continue
 
     def __repr__(self):
         s = ''
@@ -97,6 +97,7 @@ class SequenceItem(QtCore.QObject):
         return s
 
     def packDict(self):
+        """ construct a dictionary of (member name, basicvalue) pairs """
         d = {}
         for k, v in self._members.items():
             #  print(f'{k} is a {type(v.value)} with val: {v.value} and basicval: {v.basicvalue}')
@@ -118,6 +119,10 @@ class SequenceItem(QtCore.QObject):
     @pyqtSlot(QtCore.QVariant, result=QtCore.QVariant)
     @pyqtSlot(result=QtCore.QVariant)
     def get(self, key: object=None):
+        """ provides method for getting a single member value or a dict/map of (member name, value) pairs
+        if key is a single member name, return that member's value
+        if key==None, return a dict/map of all (member name, value) pairs associated with this SequenceItem
+        """
         if not key:
             # return map of all member data
             return QtCore.QVariant({k: v.basicvalue for k,v in self._members.items()})
@@ -128,6 +133,12 @@ class SequenceItem(QtCore.QObject):
     @pyqtSlot(QtCore.QVariant, QtCore.QVariant, result=bool)
     @pyqtSlot(QtCore.QVariant, result=bool)
     def set(self, key: object=None, val: object=None):
+        """ provides method for setting a single member or a set of members defined in a dict/map
+        if key and val are both valid, set a single member variable according to its .value() property
+        if val==None, treat key as a dict/map of (member name, setting value) pairs
+
+        Returns (bool): indicates whether setting was successful
+        """
         if isinstance(key, QtQml.QJSValue):
             key = key.toVariant()
         if isinstance(val, QtQml.QJSValue):
@@ -139,8 +150,8 @@ class SequenceItem(QtCore.QObject):
             self._members[key].value = val
         elif key:
             for k, v in key.items():
-                print(type(k), type(v))
-                print(f'setting nvw value for \"{k}\": {v}')
+                #  print(type(k), type(v))
+                print(f'setting new value for \"{k}\": {v}')
                 self._members[k].value = v
         else: return False
         return True
@@ -149,22 +160,71 @@ class SequenceItem(QtCore.QObject):
 class SequenceListModel(QtCore.QAbstractListModel):
     """ Model for manipulating an ordered list of SequenceItems from QML ListView """
 
+    ## CONSTRUCTORS
     def __init__(self, *args, **kwargs):
         """ initialize from dictionary if kwarg 'elements=[]' is provided """
         QtCore.QAbstractListModel.__init__(self, None)
         try:
-            elements = kwargs['elements']
-            self._items = elements
+            self._items = kwargs['elements']
         except:
             self._items = []
 
+    @classmethod
+    def fromJson(cls, fname):
+        self = cls()
+        self.readFromJson(fname)
+        return self
+
+    @pyqtSlot(str, result=bool)
+    def readFromJson(self, fname):
+        """ Constructor from json file of SequenceItems """
+        with open(fname, 'r') as f:
+            d = json.load(f)
+
+        try:
+            seqitems = []
+            for itemdict in d['SequenceList']:
+                seqitems.append(SequenceItem(**itemdict))
+        except Exception as e:
+            print(f"Error in {cls.__name__}.readFromJson(): failed to read SequenceList from file \"{fname}\"")
+            return False
+
+        self.beginResetModel()
+        self._items = seqitems
+        self.endResetModel();
+
+        return True
+
+    @pyqtSlot(str, result=bool)
+    def writeToJson(self, fname: str):
+        """ write all member vars to json for later recall """
+        try:
+            memlist = []
+            for mem in self._items:
+                memlist.append(mem.packDict())
+
+            # wrap with header
+            d = {'metadata': {'generated_on': datetime.now().strftime(datetimefmt)},
+                 'SequenceList': memlist }
+
+            #  js = json_serializer.to_json(d)
+            js = json.dumps(d, indent=2, separators=(',', ':'), sort_keys=True)
+
+            with open(fname, 'w') as f:
+                f.write(js)
+        except: return False
+
+        return True
+
+    ## METHODS
     # Virtual Base Method
     @pyqtSlot(QtCore.QModelIndex, result=int)
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self._items)
 
-    @pyqtSlot(int, result=QtCore.QObject)
+    @pyqtSlot(int, result=SequenceItem)
     def getItem(self, index: int):
+        """ Returns QObject """
         if index >= len(self._items):
             return None
         return self._items[index]
@@ -200,12 +260,10 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(int, int, result=bool)
     def insertRows(self, row: int, count: int, parent=QtCore.QModelIndex()):
         """ insert default constructed objects at row """
-        self.layoutAboutToBeChanged.emit()
         self.beginInsertRows(parent, row, row+count-1)
         for i in range(count):
             self._items.insert(row+i, SequenceItem())
         self.endInsertRows()
-        self.layoutChanged.emit()
         return True
 
     # Virtual Base Method
@@ -227,20 +285,27 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if count > 1:
             raise NotImplementedError(f'{__name__} is not yet implemented for count > 1')
 
-        self.layoutAboutToBeChanged.emit()
-        self.beginMoveRows(self.index(sourceRow), sourceRow, count, self.index(destinationChild), destinationChild)
+        # see http://doc.qt.io/qt-5/qabstractitemmodel.html#beginMoveRows for explanation
+        if (destinationChild < sourceRow):
+            destIndex = destinationChild
+        elif (sourceRow<=destinationChild<=(sourceRow+count-1)):
+            destIndex = destinationChild-(sourceRow+count-1)-1+sourceRow
+        else:
+            destIndex = destinationChild+1
+        self.beginMoveRows(QtCore.QModelIndex(), sourceRow, sourceRow+count-1, QtCore.QModelIndex(), destIndex)
         for i in range(count):
             self._items.insert(destinationChild, self._items.pop(sourceRow+i))
             #  print(f'moving from {sourceRow} to {destinationChild}')
         self.endMoveRows()
-        self.layoutChanged.emit()
         return True
 
     # Virtual Base Method
+    @pyqtSlot(QtCore.QModelIndex, QtCore.QVariant, result=bool)
     def setData(self, index: QtCore.QModelIndex, value: QtCore.QVariant, role: int=Qt.EditRole):
         """ modify the value of data object at index """
+        print(index.row(), value, role, _getEnumMemberFromInt(SequenceUserRoles, role))
         if not index.isValid():
-            return None
+            return False
 
         if role == Qt.EditRole:
             self._items[index.row()] = value
@@ -251,52 +316,14 @@ class SequenceListModel(QtCore.QAbstractListModel):
             print('setting for role {!s}'.format(_getEnumMemberFromInt(SequenceUserRoles, role)))
             return True
 
-        return None
+        return False
 
     # Virtual Base Method
-    @pyqtSlot()
     def roleNames(self):
         """ Returns dict mapping all possible roles to their unique integers
             A role should be defined for every member that will be accessed by a QML Delegate """
         hashmap = {e.value: bytes(e.name, 'ascii') for e in SequenceUserRoles.__members__.values() }
         return hashmap
-
-    @pyqtSlot(str, result=bool)
-    def writeToJson(self, fname: str):
-        """ write all member vars to json for later recall """
-        try:
-            memlist = []
-            for mem in self._items:
-                memlist.append(mem.packDict())
-
-            # wrap with header
-            d = {'metadata': {'generated_on': datetime.now().strftime(datetimefmt)},
-                 'SequenceList': memlist }
-
-            #  js = json_serializer.to_json(d)
-            js = json.dumps(d, indent=2, separators=(',', ':'), sort_keys=True)
-
-            with open(fname, 'w') as f:
-                f.write(js)
-        except: return False
-
-        return True
-
-    @classmethod
-    @pyqtSlot(str, result=bool)
-    def readFromJson(cls, fname):
-        with open(fname, 'r') as f:
-            d = json.load(f)
-
-        try:
-            seqitems = []
-            for itemdict in d['SequenceList']:
-                seqitems.append(SequenceItem(**itemdict))
-        except Exception as e:
-            raise RuntimeError(f"Error in {cls.__name__}.readFromJson(): failed to read SequenceList from file \"{fname}\"")
-
-        a = SequenceListModel(elements=seqitems)
-        return a
 
 # Necessary to make this type accessible from QML
 #  qmlRegisterType(SequenceListModel, 'com.soc.types.SequenceListModel', 1, 0, 'SequenceListModel')

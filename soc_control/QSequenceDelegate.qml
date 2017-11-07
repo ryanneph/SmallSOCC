@@ -18,12 +18,48 @@ Pane {
   property color bgcolor:          "transparent"
   property color content_fgcolor:  "black"
   property color index_fgcolor:    "gray"
+  property bool  is_modified:      false
+
+  signal modified; // indicates data that hasn't been saved to file
+  signal saved;    // indicates that data has been saved to file
+
+  // get model which stores all items for attached view
+  function getModel() { return seqdelegate.ListView.view.model; }
+
+  // gets SequenceItem associated with this delegate
+  function getItem() {
+    // console.debug("getItem("+index+")");
+    return getModel().getItem(index);
+  }
+
+  // get/set data on SequenceItem associated with this delegate
+  function getData() {
+    return getItem().get();
+  }
+  function setData(datamap) {
+    var model = getModel();
+    if (getItem(index).set(datamap)) {
+      var modelindex = model.index(index, 0);
+      model.dataChanged(modelindex, modelindex); // redraw delegate
+      modified();
+    } else {
+      console.debug('failed to set data on item: '+index);
+      return false;
+    }
+    return true;
+  }
+
+  // visually indicate that this data is unsaved exists only in gui state
+  onModified: function() {
+    is_modified = true;
+  }
 
   states: [
     State {
       name: "MODIFIED"
+      when: is_modified && !seqdelegate.ListView.isCurrentItem
       PropertyChanges {
-        target: seqdelegate;
+        target: seqdelegate
         content_fgcolor: "white"
         index_fgcolor: "#d9d9d9"
         bgcolor: "#a56000"
@@ -31,14 +67,22 @@ Pane {
     },
     State {
       name: "SELECTED"
-      when: seqdelegate.ListView.isCurrentItem
+      when: seqdelegate.ListView.isCurrentItem && !is_modified
       PropertyChanges {
-        target: seqdelegate;
+        target: seqdelegate
         content_fgcolor: "white"
         index_fgcolor: "#d9d9d9"
         bgcolor: "steelblue"
       }
-      StateChangeScript {
+    },
+    State {
+      name: "MOD_SELECT"
+      when: seqdelegate.ListView.isCurrentItem && is_modified
+      PropertyChanges {
+        target: seqdelegate
+        content_fgcolor: "white"
+        index_fgcolor: "#d9d9d9"
+        bgcolor: "#c99000"
       }
     }
   ]

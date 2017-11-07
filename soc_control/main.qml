@@ -15,7 +15,7 @@ ApplicationWindow {
   // maximumHeight: height
   // maximumWidth: width
   color: "#EEE"
-  footer: QTimedText {id: "footer_status"; interval: 3000}
+  footer: QTimedText {id: "footer_status"; interval: 5000}
 
   Item {
     id: debugborder
@@ -148,25 +148,27 @@ ApplicationWindow {
             var d = DynamicQML.createModalDialog(mainwindow, "QFileDialog.qml", {"intent": "load"});
             d.open();
             d.onSubmitted.connect( function(obj) {
-              console.debug('Loading file from '+obj.path);
-              field_json_path.text = obj.path;
-              //TODO: Call LoadJSON()
+              if (SequenceListModel.readFromJson(obj.path)) {
+                field_json_path.text = obj.path;
+                var msg = "Sequence list loaded from \""+obj.path+"\"";
+                console.debug(msg);
+                footer_status.text = msg;
+                field_json_path.text = obj.path;
+              }
               obj.destroy(); /* cleanup */
             });
           }
         }
-        Button { /* Load JSON */
+        Button { /* Save JSON */
           text: "Save"
           Layout.alignment: Qt.AlignRight
           onClicked:{
             var d = DynamicQML.createModalDialog(mainwindow, "QFileDialog.qml", {"intent": "save"});
             d.open();
             d.onSubmitted.connect( function(obj) {
-              //TODO: Call SaveJSON()
               if (SequenceListModel.writeToJson(obj.path)) {
                 var msg = "Sequence list saved to \""+obj.path+"\"";
                 console.debug(msg);
-                //TODO: implement timed footer message class
                 footer_status.text = msg;
                 field_json_path.text = obj.path;
               }

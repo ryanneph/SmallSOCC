@@ -65,13 +65,36 @@ RowLayout {
       Layout.fillWidth: true
       // text: "\u2B10+"
       text: "+"
-      font.pointSize: 20
+      font.pointSize: 16
+      textcolor: "#007B08"
       onClicked: SequenceListModel.insertRows(lvseq.currentIndex+1, 1)
+    }
+    QStylizedButton { /* Edit Item Data */
+      Layout.preferredHeight: btn_height
+      Layout.fillWidth: true
+      text: "Edit"
+      onClicked: {
+        // Access SequenceItem properties through lvseq.model.get(lvseq.currentIndex)[property]
+        var d = DynamicQML.createModalDialog(mainwindow, "QEditDialog.qml");
+        var modelData = lvseq.currentItem.getData();
+        d.formdata = {
+          "rot_couch_deg":  modelData.rot_couch_deg,
+          "rot_gantry_deg": modelData.rot_gantry_deg,
+          "description":    modelData.description,
+          "timecode_ms":    modelData.timecode_ms,
+        };
+        d.open();
+        d.onSubmitted.connect( function(newdata) {
+          lvseq.currentItem.setData(newdata);
+        } );
+      }
     }
     QStylizedButton { /* remove */
       Layout.preferredHeight: btn_height
       Layout.fillWidth: true
       text: "X"
+      font.pointSize: 12
+      textcolor: "#FF5151"
       onClicked: SequenceListModel.removeRows(lvseq.currentIndex, 1)
     }
     QStylizedButton { /* move down */
@@ -83,30 +106,6 @@ RowLayout {
         if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex+1)) {
           lvseq.currentIndex = lvseq.currentIndex+1;
         }
-      }
-    }
-    QStylizedButton { /* Edit Item Data */
-      Layout.preferredHeight: btn_height
-      Layout.fillWidth: true
-      text: "Edit"
-      onClicked: {
-        // Access SequenceItem properties through lvseq.model.get(lvseq.currentIndex)[property]
-        var d = DynamicQML.createModalDialog(mainwindow, "QEditDialog.qml");
-        var row = lvseq.currentIndex;
-        var modelData = lvseq.model.getItem(row).get();
-        console.debug(Object.getOwnPropertyNames(modelData));
-        d.formdata = {
-          "rot_gantry_deg": modelData.rot_couch_deg,
-          "rot_couch_deg":  modelData.rot_gantry_deg,
-          "description":    modelData.description
-        };
-        d.open();
-        d.onSubmitted.connect( function(newdata) {
-          console.debug("couch:"+newdata.rot_couch_deg+" gantry:"+newdata.rot_gantry_deg+" desc:"+newdata.description);
-          if (lvseq.model.getItem(row).set(newdata)) {
-            console.debug("NEED TO UPDATE VIEW")
-          }
-        } );
       }
     }
 
