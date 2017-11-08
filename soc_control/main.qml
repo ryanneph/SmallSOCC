@@ -38,14 +38,15 @@ ApplicationWindow {
       ColumnLayout {
         id: ul_col
 
-        QLeafletAssembly2by2 { /* Leaflet Display */
+        QLeafletAssembly { /* Leaflet Display */
           id: soc_display
           anchors.top: parent.top
           Layout.fillWidth: true /* dynamically size */
           Layout.preferredHeight: width /* keep square */
           Layout.minimumWidth: 200
           Layout.maximumWidth: 500
-          draggable: false
+          draggable: true
+          preventCollisions: false
         }
         Pane {
           id: leaflet_editor
@@ -76,9 +77,13 @@ ApplicationWindow {
               Layout.row: 1
               objectName: "leaflet_spinbox"
               editable: true
-              from: 1
-              to: soc_display.nleaflets
+              from: 0
+              to: soc_display.nleaflets-1
               value: from
+              Component.onCompleted: {
+                // change spinbox value when leaflet is clicked
+                soc_display.onLeafletSelected.connect(function(index) { value = index; });
+              }
             }
             SpinBox {
               id: ext_spinbox
@@ -88,7 +93,10 @@ ApplicationWindow {
               editable: true
               from: 0
               to: soc_display.max_extension
-              value: from
+              value: soc_display.leaflets[leaflet_spinbox.value].extension
+              onValueModified: {
+                soc_display.setExtension(leaflet_spinbox.value, value)
+              }
             }
             Button { /* set ext */
               Layout.column: 3
@@ -96,7 +104,10 @@ ApplicationWindow {
               Layout.preferredWidth: 50
               text: "set"
               font.pointSize: 12
+              visible: false
             }
+
+            //DEBUG
             Label {
               text: "win width:"
               Layout.column: 1

@@ -3,38 +3,81 @@ import QtQuick 2.5
 import com.soc.types.Leaflets 1.0
 
 Leaflet {
-  id: leaflet
+  id: root
   function isHorizontal() { return orientation === Leaflet.Horizontal }
-  function isPositive() { return direction === Leaflet.Positive }
+  function isVertical()   { return !isHorizontal(); }
+  function isPositive()   { return direction === Leaflet.Positive }
+  function isNegative()   { return !isPositive(); }
   property var dir: isPositive() ? 1 : -1
   property point startpos
   property int   full_range
-  property int   complementary_ext
+  property int   compext
   property bool  draggable: false
-  x: isHorizontal() ? parseInt(startpos.x+dir*full_range*(extension/max_extension)) : startpos.x
-  y: !isHorizontal() ? parseInt(startpos.y+dir*full_range*(extension/max_extension)) : startpos.y
+  property bool  preventCollisions: true
+  property int   collide: {
+    if (preventCollisions) { compext; }
+    else { 0; }
+  }
+
+  x: startpos.x
+  y: startpos.y
   z: isHorizontal() ? 2 : 1
 
-  // extension: { return 0
-  // if (orientation === Leaflet.Horizontal) {
-  //     return parseInt(255*dir*(x-start.x)*1.0/(full_range))
-  // } else {
-  //     return parseInt(255*dir*(y-start.y)*1.0/(full_range))
-  // }
-  // }
+  // connect signals on construction
+  signal onPressed()
+  signal onReleased()
+  Component.onCompleted: {
+    mousearea.onPressed.connect(root.onPressed);
+    mousearea.onReleased.connect(root.onReleased);
+  }
+
+  // Visual Properties
+  property int direction: Leaflet.Positive
+  property int orientation: Leaflet.Horizontal
+
+  // update x/y from a change in extension
+  property bool enableextsignal: true;
+  onExtensionChanged: function() {
+    if (enableextsignal) {
+      // set x,y appropriately
+      // TODO: handle collisions here too
+      x = xfromext();
+      y = yfromext();
+      // console.debug('extension change prompted update to x,y: x='+x+'  y='+y);
+    }
+  }
+
+  // calculate x, y from extension, orientation, and direction
+  function xfromext() {
+    if (isHorizontal()) {
+      return parseInt(startpos.x+dir*full_range*(extension/max_extension));
+    } else { return startpos.x; }
+  }
+  function yfromext() {
+    if (!isHorizontal()) {
+      return parseInt(startpos.y+dir*full_range*(extension/max_extension))
+    } else { return startpos.y; }
+  }
+  function extfromxy() {
+    if (orientation === Leaflet.Horizontal) {
+      return parseInt(max_extension*dir*(x-startpos.x)*1.0/(full_range))
+    } else {
+      return parseInt(max_extension*dir*(y-startpos.y)*1.0/(full_range))
+    }
+  }
 
   Rectangle {
     id: compound
     width: isHorizontal() ? rect_leaf.width + rect_stem.width : rect_leaf.width
     height: isHorizontal() ? rect_leaf.height : rect_leaf.height + rect_stem.height
     x: isHorizontal() && isPositive() ? -rect_stem.width : 0
-    y: !isHorizontal() && isPositive() ? -rect_stem.height : 0
+    y: isVertical() && isPositive() ? -rect_stem.height : 0
     color: "transparent"
 
     Rectangle {
       id: rect_leaf
-      width: leaflet.width
-      height: leaflet.height
+      width: root.width
+      height: root.height
       border.color: Qt.darker(color, 1.4)
       property color base_color: "#e09947"
       color: base_color
@@ -45,17 +88,17 @@ Leaflet {
         } else { return undefined }
       }
       anchors.left: {
-        if (isHorizontal() && !isPositive()) {
+        if (isHorizontal() && isNegative()) {
           return compound.left
         } else { return undefined }
       }
       anchors.top: {
-        if (!isHorizontal() && !isPositive()) {
+        if (isVertical() && isNegative()) {
           return compound.top
         } else { return undefined }
       }
       anchors.bottom: {
-        if (!isHorizontal() && isPositive()) {
+        if (isVertical() && isPositive()) {
           return compound.bottom
         } else { return undefined }
       }
@@ -76,72 +119,72 @@ Leaflet {
         } else { return undefined }
       }
       anchors.left: {
-        if (isHorizontal() && !isPositive()) {
+        if (isHorizontal() && isNegative()) {
           rect_leaf.right
         } else { undefined }
       }
       anchors.top: {
-        if (!isHorizontal() && !isPositive()) {
+        if (isVertical() && isNegative()) {
           rect_leaf.bottom
         } else { undefined }
       }
       anchors.bottom: {
-        if (!isHorizontal() && isPositive()) {
+        if (isVertical() && isPositive()) {
           rect_leaf.top
         } else { undefined }
       }
     }
     Text {
-      id: leaflet_label
       anchors.horizontalCenter: rect_leaf.horizontalCenter
       anchors.verticalCenter: rect_leaf.verticalCenter
-      text: leaflet.index
+      text: index
       color: Qt.darker(rect_leaf.color, 1.05)
       font.pointSize: 14
     }
   }
   MouseArea {
-    id: mouseArea
+    id: mousearea
     anchors.fill: compound
-    enabled: parent.draggable
-    drag.target: parent
+    enabled: root.draggable
+    drag.target: root
     drag.axis: isHorizontal() ? Drag.XAxis : Drag.YAxis
 
     drag.minimumX: {
       if (isHorizontal()) {
-        isPositive() ? parent.startpos.x : parent.startpos.x - (parent.full_range-parent.complementary_ext)
+        isPositive() ? parent.startpos.x : parent.startpos.x - (parent.full_range-root.collide)
       } else { 0 }
     }
     drag.maximumX: {
       if (isHorizontal()) {
-        isPositive() ? parent.startpos.x + (full_range-complementary_ext) : parent.startpos.x
+        isPositive() ? parent.startpos.x + (root.full_range-root.collide) : parent.startpos.x
       } else { 0 }
     }
     drag.minimumY: {
-      if (!isHorizontal()) {
-        isPositive() ? parent.startpos.y : parent.startpos.y - (full_range-complementary_ext)
+      if (isVertical()) {
+        isPositive() ? parent.startpos.y : parent.startpos.y - (full_range-root.collide)
       } else { 0 }
     }
     drag.maximumY: {
-      if (!isHorizontal()) {
-        isPositive() ? parent.startpos.y + (full_range-complementary_ext) : parent.startpos.y
+      if (isVertical()) {
+        isPositive() ? parent.startpos.y + (full_range-root.collide) : parent.startpos.y
       } else { 0 }
     }
-    // drag.minimumX: isPositive() ? start.x : start.x + dir*(full_range-complementary_ext)
-    // drag.maximumX: isPositive() ? start.x + dir*(full_range-complementary_ext) : start.x
-    // drag.minimumY: isPositive() ? start.y : start.y + dir*(full_range-complementary_ext)
-    // drag.maximumY: isPositive() ? start.y + dir*(full_range-complementary_ext) : start.y
 
     onPressed: {
       rect_leaf.color = "#f1aa50"
+      console.log("index:     " + index);
       console.log("drag.minX: " + drag.minimumX);
       console.log("drag.maxX: " + drag.maximumX);
       console.log("drag.minY: " + drag.minimumY);
       console.log("drag.maxX: " + drag.maximumY);
-      console.log("comp:      " + leaflet.complementary_ext);
+      console.log("comp:      " + root.collide);
     }
     onReleased: {
       rect_leaf.color = rect_leaf.base_color
+      // keep from firing a loop of x/y change -> extChange -> repeat...
+      enableextsignal = false;
+      extension = extfromxy();
+      enableextsignal = true;
     }
   }
 }

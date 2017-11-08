@@ -65,9 +65,12 @@ class HWSOC(Borg):
         self._fserial.write(bytes([ 0xFF, 0xD7, idx ]) + pos.to_bytes(2, byteorder='big', signed=False) )
         self._fserial.reset_input_buffer()
 
-    def get_position(self, idx):
-        raise NotImplementedError('Feedback mechanism not yet implemented in hardware')
-
     def go_home(self):
         for i in range(self.nleaflets):
             self.set_position(i, 0)
+
+    def get_position(self, idx):
+        raise NotImplementedError('Feedback mechanism not yet implemented in hardware')
+
+    def sync(self):
+        raise NotImplementedError('HW/SW Sync not yet implemented')

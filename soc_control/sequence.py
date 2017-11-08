@@ -66,12 +66,12 @@ class SequenceItem(QtCore.QObject):
     """ Backend representation for distinct setting of leaflet positions, beam angles,
     and occurence time in a treatment plan """
 
-    def __init__(self, **kwargs):
+    def __init__(self, parent=None, **kwargs):
         """
         Keyword Args:
             All valid kwargs are detailed in _sequenceitem_public_members
         """
-        QtCore.QObject.__init__(self, None)
+        QtCore.QObject.__init__(self, parent)
         # private members
         self._members = copy.deepcopy(_sequenceitem_public_members)
 
@@ -158,7 +158,14 @@ class SequenceItem(QtCore.QObject):
 
 
 class SequenceListModel(QtCore.QAbstractListModel):
-    """ Model for manipulating an ordered list of SequenceItems from QML ListView """
+    """ Model for manipulating an ordered list of SequenceItems from QML ListView
+
+    NOTE: anytime a new SequenceItem() instance is added to this collection, you MUST set the parent of the
+          SequenceItem QObject to "self" of this class. Otherwise, when handing these instances to qml through
+          self.getItem(), python will garbage collect the SequenceItem instance and qml will throw an error
+    """
+
+    onModelReset = pyqtSignal()
 
     ## CONSTRUCTORS
     def __init__(self, *args, **kwargs):
@@ -184,7 +191,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         try:
             seqitems = []
             for itemdict in d['SequenceList']:
-                seqitems.append(SequenceItem(**itemdict))
+                seqitems.append(SequenceItem(**itemdict, parent=self))
         except Exception as e:
             print(f"Error in {cls.__name__}.readFromJson(): failed to read SequenceList from file \"{fname}\"")
             return False
@@ -192,7 +199,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.beginResetModel()
         self._items = seqitems
         self.endResetModel();
-
+        self.onModelReset.emit()
         return True
 
     @pyqtSlot(str, result=bool)
@@ -225,7 +232,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(int, result=SequenceItem)
     def getItem(self, index: int):
         """ Returns QObject """
-        if index >= len(self._items):
+        if index >= self.rowCount():
             return None
         return self._items[index]
 
@@ -235,7 +242,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         """ Get data item indexed by index.row() and member indicated by role """
         #  print("trying to get {}".format(_getEnumMemberFromInt(SequenceUserRoles, role-Qt.UserRole-1)))
         if not index.isValid(): return None
-        if index.row() > len(self._items): return None
+        if index.row() > self.rowCount(): return None
         if role == Qt.DisplayRole or role == Qt.EditRole:
             return self._items[index.row()]
         if Qt.UserRole < role < Qt.UserRole+len(SequenceUserRoles.__members__)+1:
@@ -260,9 +267,11 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(int, int, result=bool)
     def insertRows(self, row: int, count: int, parent=QtCore.QModelIndex()):
         """ insert default constructed objects at row """
+        if self.rowCount() <= 0:
+            row = 0
         self.beginInsertRows(parent, row, row+count-1)
         for i in range(count):
-            self._items.insert(row+i, SequenceItem())
+            self._items.insert(row+i, SequenceItem(parent=self))
         self.endInsertRows()
         return True
 
@@ -270,6 +279,8 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(int, int, result=bool)
     def removeRows(self, row: int, count: int, parent=QtCore.QModelIndex()):
         """ remove a number of rows from model """
+        if self.rowCount() <= 0:
+            return False
         self.beginRemoveRows(QtCore.QModelIndex(), row, row+count-1)
         del self._items[row:row+count]
         self.endRemoveRows()
@@ -279,8 +290,8 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(int, int, int, result=bool)
     def moveRows(self, sourceRow: int, count: int, destinationChild: int):
         """ Move sourceRow->sourceRow+count to destinationChild and trigger view refresh """
-        if (sourceRow < 0 or len(self._items) <= sourceRow) \
-        or (destinationChild < 0 or len(self._items) <= destinationChild):
+        if (sourceRow < 0 or self.rowCount() <= sourceRow) \
+        or (destinationChild < 0 or self.rowCount() <= destinationChild):
             return False
         if count > 1:
             raise NotImplementedError(f'{__name__} is not yet implemented for count > 1')

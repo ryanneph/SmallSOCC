@@ -28,9 +28,24 @@ import leaflet
 import leafletassembly
 import sequence
 
+# define paths
 parent = os.path.abspath(dirname(dirname(__file__)))
 TEST_FILES = os.path.join(parent, 'test_files')
 TEMP = os.path.join(parent, 'temp')
+
+# TODO: Add proper python logger and integrate with Qt Message Handler
+def qt_message_handler(mode, context, message):
+    if mode == QtCore.QtInfoMsg:
+        mode = 'INFO'
+    elif mode == QtCore.QtWarningMsg:
+        mode = 'WARNING'
+    elif mode == QtCore.QtCriticalMsg:
+        mode = 'CRITICAL'
+    elif mode == QtCore.QtFatalMsg:
+        mode = 'FATAL'
+    else:
+        mode = 'DEBUG'
+    print('qml- {!s}:L{:d} -{!s}:  {!s}'.format(os.path.basename(context.file), context.line, mode, message))
 
 # TODO: DEBUG
 # load example sequence, otherwise blank
@@ -39,7 +54,7 @@ try:
 except Exception as e:
     print('FAILED TO READ DEBUG JSON FILE : {!s}'.format(e))
     # SAMPLE ITEMS FOR DEBUG
-    from sequence import SequenceItem
+    from sequence import SequenceItem, SequenceItemType
     sample_sequenceitems = [
         SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=1500, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
         SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
@@ -54,10 +69,14 @@ def preExit():
     samplelistmodel.writeToJson(os.path.join(TEMP, 'test_write.json'))
 # TODO: END DEBUG
 
+
+
 ####################################################################################################
 # Start GUI
 if __name__ == '__main__':
     HWSOC(8) # init singleton instance for controlling hardware
+
+    QtCore.qInstallMessageHandler(qt_message_handler)
 
     app = QGuiApplication(sys.argv + ['-style', 'default'])
     app.aboutToQuit.connect(preExit) # perform cleanup

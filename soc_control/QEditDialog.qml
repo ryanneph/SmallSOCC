@@ -16,7 +16,7 @@ Dialog {
     "rot_gantry_deg": text_gantry.text,
     "description":    text_desc.text,
     "timecode_ms":    text_timecode.text,
-    "extension_list": [0,0,0,0,0,0,0,0]
+    // "extension_list": [0,0,0,0,0,0,0,0]
   })
 
   // populate with current data

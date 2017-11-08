@@ -5,6 +5,10 @@ import QtQuick.Layouts 1.3
 import "dynamicqml.js" as DynamicQML
 
 RowLayout {
+  Component.onCompleted: {
+    lvseq.model.onModelReset.connect(lvseq.refreshSOCDisplay);
+    lvseq.model.onModelReset.connect(function() {lvseq.currentIndex = 0;})
+  }
   Pane { /* Sequence List */
     id: seq_list_border
     clip: true
@@ -27,6 +31,17 @@ RowLayout {
 
       model: SequenceListModel  // see main.py for contextvariable setting
       delegate: QSequenceDelegate {}
+
+      onCurrentIndexChanged: refreshSOCDisplay()
+
+      function refreshSOCDisplay() {
+        var map = {};
+        var extarray = lvseq.model.getItem(lvseq.currentIndex).get()['extension_list']
+        for (var i=0; i<extarray.length; ++i) {
+          map[i] = extarray[i];
+        }
+        soc_display.setExtension(map);
+      }
     }
   }
 
@@ -67,7 +82,9 @@ RowLayout {
       text: "+"
       font.pointSize: 16
       textcolor: "#007B08"
-      onClicked: SequenceListModel.insertRows(lvseq.currentIndex+1, 1)
+      onClicked: {
+        SequenceListModel.insertRows(lvseq.currentIndex+1, 1)
+      }
     }
     QStylizedButton { /* Edit Item Data */
       Layout.preferredHeight: btn_height
@@ -75,13 +92,15 @@ RowLayout {
       text: "Edit"
       onClicked: {
         // Access SequenceItem properties through lvseq.model.get(lvseq.currentIndex)[property]
+        if (!lvseq.currentItem) { console.debug('current item is null'); return null; }
+        var itemdata = lvseq.currentItem.getData();
+        if (!itemdata) { console.debug('data for current item is null'); return null; }
         var d = DynamicQML.createModalDialog(mainwindow, "QEditDialog.qml");
-        var modelData = lvseq.currentItem.getData();
         d.formdata = {
-          "rot_couch_deg":  modelData.rot_couch_deg,
-          "rot_gantry_deg": modelData.rot_gantry_deg,
-          "description":    modelData.description,
-          "timecode_ms":    modelData.timecode_ms,
+          "rot_couch_deg":  itemdata.rot_couch_deg,
+          "rot_gantry_deg": itemdata.rot_gantry_deg,
+          "description":    itemdata.description,
+          "timecode_ms":    itemdata.timecode_ms,
         };
         d.open();
         d.onSubmitted.connect( function(newdata) {
