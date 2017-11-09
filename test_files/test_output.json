@@ -1,79 +1,79 @@
 {
   "SequenceList":[
     {
-      "date_created":"2017 Nov 01 12:19:35",
-      "description":"",
+      "date_created":"2017 Nov 09 10:19:27",
+      "description":"Single Field",
       "extension_list":[
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
+        50,
+        50,
+        100,
+        100,
+        50,
+        50,
+        50,
+        50
       ],
-      "rot_couch_deg":5,
-      "rot_gantry_deg":0,
-      "timecode_ms":1500,
+      "rot_couch_deg":"5",
+      "rot_gantry_deg":"0",
+      "timecode_ms":"0",
       "type":"Manual"
     },
     {
-      "date_created":"2017 Nov 01 12:19:35",
-      "description":"descriptive text2",
+      "date_created":"2017 Nov 09 10:19:27",
+      "description":"2-4_Md",
       "extension_list":[
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
+        44,
+        149,
+        159,
+        32,
+        44,
+        158,
+        168,
+        31
       ],
-      "rot_couch_deg":12,
-      "rot_gantry_deg":120,
-      "timecode_ms":1500,
+      "rot_couch_deg":"12",
+      "rot_gantry_deg":"120",
+      "timecode_ms":"10000",
       "type":"Auto"
     },
     {
-      "date_created":"2017 Nov 01 12:19:35",
-      "description":"descriptive text3",
+      "date_created":"2017 Nov 09 10:19:27",
+      "description":"1-3_Md",
       "extension_list":[
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
+        141,
+        45,
+        72,
+        125,
+        167,
+        67,
+        66,
+        144
       ],
-      "rot_couch_deg":24,
-      "rot_gantry_deg":25,
-      "timecode_ms":1500,
+      "rot_couch_deg":"0",
+      "rot_gantry_deg":"45",
+      "timecode_ms":"18000",
       "type":"Auto"
     },
     {
-      "date_created":"2017 Nov 01 12:19:35",
-      "description":"descriptive text4",
+      "date_created":"2017 Nov 09 10:19:27",
+      "description":"2-4_Sm",
       "extension_list":[
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
+        37,
+        205,
+        153,
+        20,
+        11,
+        188,
+        194,
+        62
       ],
-      "rot_couch_deg":0,
-      "rot_gantry_deg":45,
-      "timecode_ms":1500,
+      "rot_couch_deg":"24",
+      "rot_gantry_deg":"25",
+      "timecode_ms":"25500",
       "type":"Auto"
     }
   ],
   "metadata":{
-    "generated_on":"2017 Nov 01 12:19:35"
+    "generated_on":"2017 Nov 09 10:20:14"
   }
 }
