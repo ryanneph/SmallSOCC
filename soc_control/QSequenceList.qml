@@ -5,6 +5,8 @@ import QtQuick.Layouts 1.3
 import "dynamicqml.js" as DynamicQML
 
 RowLayout {
+  property alias lvseq: lvseq
+
   Component.onCompleted: {
     lvseq.model.onModelReset.connect(lvseq.refreshSOCDisplay);
     lvseq.model.onModelReset.connect(function() {lvseq.currentIndex = 0;})
@@ -36,11 +38,11 @@ RowLayout {
 
       function refreshSOCDisplay() {
         var map = {};
-        var extarray = lvseq.model.getItem(lvseq.currentIndex).get()['extension_list']
+        var extarray = SequenceListModel.getItem(lvseq.currentIndex).get()['extension_list']
         for (var i=0; i<extarray.length; ++i) {
           map[i] = extarray[i];
         }
-        soc_display.setExtension(map);
+        displaycontainer.soc_display.setExtension(map);
       }
     }
   }

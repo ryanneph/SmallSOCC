@@ -31,7 +31,6 @@ Dialog {
   }
 
   GridLayout {
-    // anchors.fill: parent
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top

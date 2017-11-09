@@ -9,7 +9,7 @@ LeafletAssembly {
   property color color_field: "#F0F6F8"
   property bool draggable: false
   property bool preventCollisions: false
-  readonly property int nleaflets: 8
+  readonly property int nleaflets: leaflets.length
   property alias max_extension: l0.max_extension
   clip: true
 
@@ -40,6 +40,19 @@ LeafletAssembly {
     } else {
       // we are only setting one extension
       leaflets[index].extension = ext;
+    }
+  }
+  function getExtension(index) {
+    if (index == null) {
+      // get array of extensions
+      var extension_list = []
+      for (var i=0; i<leaflets.length; ++i) {
+        extension_list.push(leaflets[i].extension);
+      }
+      return extension_list;
+    } else {
+      // return only requested extension
+      return leaflets[index].extension;
     }
   }
 

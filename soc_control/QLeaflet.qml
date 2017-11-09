@@ -172,12 +172,12 @@ Leaflet {
 
     onPressed: {
       rect_leaf.color = "#f1aa50"
-      console.log("index:     " + index);
-      console.log("drag.minX: " + drag.minimumX);
-      console.log("drag.maxX: " + drag.maximumX);
-      console.log("drag.minY: " + drag.minimumY);
-      console.log("drag.maxX: " + drag.maximumY);
-      console.log("comp:      " + root.collide);
+      // console.log("index:     " + index);
+      // console.log("drag.minX: " + drag.minimumX);
+      // console.log("drag.maxX: " + drag.maximumX);
+      // console.log("drag.minY: " + drag.minimumY);
+      // console.log("drag.maxX: " + drag.maximumY);
+      // console.log("comp:      " + root.collide);
     }
     onReleased: {
       rect_leaf.color = rect_leaf.base_color

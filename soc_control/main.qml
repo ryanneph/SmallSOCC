@@ -17,15 +17,6 @@ ApplicationWindow {
   color: "#EEE"
   footer: QTimedText {id: "footer_status"; interval: 5000}
 
-  Item {
-    id: debugborder
-    Rectangle {
-      anchors.fill: parent
-      border.color: "red"
-      color: "#EEE"
-    }
-  }
-
   ColumnLayout {
     /* split into two horizontal control containers */
     id: controls_container
@@ -35,120 +26,23 @@ ApplicationWindow {
     RowLayout {
       id: upper_half
       spacing: controls_container.anchors.margins
-      ColumnLayout {
-        id: ul_col
 
-        QLeafletAssembly { /* Leaflet Display */
-          id: soc_display
-          anchors.top: parent.top
-          Layout.fillWidth: true /* dynamically size */
-          Layout.preferredHeight: width /* keep square */
-          Layout.minimumWidth: 200
-          Layout.maximumWidth: 500
-          draggable: true
-          preventCollisions: false
-        }
-        Pane {
-          id: leaflet_editor
-          clip: true
-          Layout.fillHeight: true
-          Layout.fillWidth: true
-
-          // TODO: DEBUG
-          background: debugborder
-
-          GridLayout { /* controls under soc_display */
-            columns: 3
-            Label {
-              text: "Leaflet:"
-              font.pixelSize: 16
-              Layout.column: 1
-              Layout.row: 1
-            }
-            Label {
-              text: "Extension:"
-              font.pixelSize: 16
-              Layout.column: 1
-              Layout.row: 2
-            }
-            SpinBox {
-              id: leaflet_spinbox
-              Layout.column: 2
-              Layout.row: 1
-              objectName: "leaflet_spinbox"
-              editable: true
-              from: 0
-              to: soc_display.nleaflets-1
-              value: from
-              Component.onCompleted: {
-                // change spinbox value when leaflet is clicked
-                soc_display.onLeafletSelected.connect(function(index) { value = index; });
-              }
-            }
-            SpinBox {
-              id: ext_spinbox
-              Layout.column: 2
-              Layout.row: 2
-              objectName: "ext_spinbox"
-              editable: true
-              from: 0
-              to: soc_display.max_extension
-              value: soc_display.leaflets[leaflet_spinbox.value].extension
-              onValueModified: {
-                soc_display.setExtension(leaflet_spinbox.value, value)
-              }
-            }
-            Button { /* set ext */
-              Layout.column: 3
-              Layout.row: 2
-              Layout.preferredWidth: 50
-              text: "set"
-              font.pointSize: 12
-              visible: false
-            }
-
-            //DEBUG
-            Label {
-              text: "win width:"
-              Layout.column: 1
-              Layout.row: 4
-            }
-            Label {
-              text: mainwindow.width
-              Layout.column: 2
-              Layout.row: 4
-            }
-            Label {
-              text: "win height:"
-              Layout.column: 1
-              Layout.row: 5
-            }
-            Label {
-              text: mainwindow.height
-              Layout.column: 2
-              Layout.row: 5
-            }
-          }
-        }
-      }
-      QSequenceList {} /* ListView + Buttons */
+      QSOCDisplay { id: displaycontainer }   /* QLeafletAssembly + controls */
+      QSequenceList { id: seqlist } /* ListView + Buttons */
     }
-    Pane {
+
+    Pane { /* filedialog controls */
       id: bottom_frame
       Layout.maximumHeight: 200
       Layout.minimumHeight: 75
       Layout.fillWidth: true
-      background: Rectangle {
-        anchors.fill: parent
-        border.color: "orange"
-        border.width: 2
-        color: "transparent"
-      }
+      background: QDebugBorder {}
 
       RowLayout {
+        anchors.fill: parent
         TextInput {
           id: field_json_path
-          width: 100
+          Layout.fillWidth: true
           readOnly: true
           text: "json_path"
         }

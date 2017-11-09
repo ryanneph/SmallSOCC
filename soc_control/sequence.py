@@ -144,7 +144,6 @@ class SequenceItem(QtCore.QObject):
         if isinstance(val, QtQml.QJSValue):
             val = val.toVariant()
 
-        print(type(key), type(val))
         if val:
             print(f'setting new value for \"{key}\": {val}')
             self._members[key].value = val
