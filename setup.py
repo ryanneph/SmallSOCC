@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 from soc_control.version import VERSION_FULL
 
-setup(name='SOC_Control',
+setup(name='SmallSOCC',
       version=VERSION_FULL,
       description='GUI for controlling Sparse Orthogonal Collimator through serial interface',
       author='Ryan Neph',

@@ -1,5 +1,5 @@
 # Getting Started
-Welcome to SOC control, a simple gui for commanding an arduino based linear stepper controller over a serial interface.
+Welcome to SmallSOCC, a simple gui for commanding an arduino based linear stepper hardware over a serial interface.
 ### Dependencies
 Python package dependencies are handled during setup or can be installed manually using `pip install <package-name>`
 
@@ -30,7 +30,8 @@ cd soc_control && python setup.py develop
 If setup fails to install all dependencies, you may install them manually using:
 `pip install <package-name>`
 
-
+----------------------------
+## Addendum
 ### Platform Considerations
 Communicating with serial ports is a bit different on windows and linux. 
 In linux, serial comm. is handled by the kernel and accessible using virtual file-like descriptors 
