@@ -66,6 +66,9 @@ class SequenceItem(QtCore.QObject):
     """ Backend representation for distinct setting of leaflet positions, beam angles,
     and occurence time in a treatment plan """
 
+    # signal activation cascades to SequenceListModel
+    onMemberDataChanged = pyqtSignal()
+
     def __init__(self, parent=None, **kwargs):
         """
         Keyword Args:
@@ -153,6 +156,7 @@ class SequenceItem(QtCore.QObject):
                 print(f'setting new value for \"{k}\": {v}')
                 self._members[k].value = v
         else: return False
+        self.onMemberDataChanged.emit()
         return True
 
 
@@ -165,6 +169,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
     """
 
     onModelReset = pyqtSignal()
+    onMemberDataChanged = pyqtSignal()
 
     ## CONSTRUCTORS
     def __init__(self, *args, **kwargs):
@@ -174,6 +179,9 @@ class SequenceListModel(QtCore.QAbstractListModel):
             self._items = kwargs['elements']
         except:
             self._items = []
+
+        for item in self._items:
+            self.connectSignals(item)
 
     @classmethod
     def fromJson(cls, fname):
@@ -197,6 +205,8 @@ class SequenceListModel(QtCore.QAbstractListModel):
 
         self.beginResetModel()
         self._items = seqitems
+        for item in self._items:
+            self.connectSignals(item)
         self.endResetModel();
         self.onModelReset.emit()
         return True
@@ -221,6 +231,14 @@ class SequenceListModel(QtCore.QAbstractListModel):
         except: return False
 
         return True
+
+    def connectSignals(self, obj):
+        """connect child's signal to parent accessible signal"""
+        obj.onMemberDataChanged.connect(self.onMemberDataChanged)
+
+    def disconnectSignals(self, obj):
+        """Disconnect all child signal handlers"""
+        obj.onMemberDataChanged.disconnect(self.onMemberDataChanged)
 
     ## METHODS
     # Virtual Base Method
@@ -271,7 +289,9 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.beginInsertRows(parent, row, row+count-1)
         for i in range(count):
             self._items.insert(row+i, SequenceItem(parent=self))
+            self.connectSignals(self._items[row+i])
         self.endInsertRows()
+        self.onMemberDataChanged.emit()
         return True
 
     # Virtual Base Method
@@ -281,8 +301,11 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if self.rowCount() <= 0:
             return False
         self.beginRemoveRows(QtCore.QModelIndex(), row, row+count-1)
+        for i in range(count):
+            self.disconnectSignals(self._items[row+i])
         del self._items[row:row+count]
         self.endRemoveRows()
+        self.onMemberDataChanged.emit()
         return True
 
     # Virtual Base Method
@@ -307,6 +330,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
             self._items.insert(destinationChild, self._items.pop(sourceRow+i))
             #  print(f'moving from {sourceRow} to {destinationChild}')
         self.endMoveRows()
+        self.onMemberDataChanged.emit()
         return True
 
     # Virtual Base Method
@@ -320,13 +344,13 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if role == Qt.EditRole:
             self._items[index.row()] = value
             self.dataChanged.emit(index, index)
-            return True
-
-        if Qt.UserRole<role<Qt.UserRole+len(SequenceUserRoles.__members__)+1:
+        elif Qt.UserRole<role<Qt.UserRole+len(SequenceUserRoles.__members__)+1:
             print('setting for role {!s}'.format(_getEnumMemberFromInt(SequenceUserRoles, role)))
-            return True
+        else:
+            return False
 
-        return False
+        self.onMemberDataChanged.emit()
+        return True
 
     # Virtual Base Method
     def roleNames(self):
@@ -334,6 +358,3 @@ class SequenceListModel(QtCore.QAbstractListModel):
             A role should be defined for every member that will be accessed by a QML Delegate """
         hashmap = {e.value: bytes(e.name, 'ascii') for e in SequenceUserRoles.__members__.values() }
         return hashmap
-
-# Necessary to make this type accessible from QML
-#  qmlRegisterType(SequenceListModel, 'com.soc.types.SequenceListModel', 1, 0, 'SequenceListModel')

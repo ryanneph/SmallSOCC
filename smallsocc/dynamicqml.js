@@ -1,3 +1,5 @@
+
+// dynamically create modal dialogue window given a component URL and parent pointer
 function createModalDialog(parent, url, map) {
   var component = Qt.createComponent(url);
   if (component.status != Component.Ready) {

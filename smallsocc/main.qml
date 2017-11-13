@@ -17,6 +17,26 @@ ApplicationWindow {
   color: "#EEE"
   footer: QTimedText {id: "footer_status"; interval: 5000}
 
+  // prompt a refresh of the SOC display using data from the currently selected SequenceItem
+  function refreshSOCDisplay() {
+    var map = {};
+    var extarray = SequenceListModel.getItem(qsequencelist.lvseq.currentIndex).get()['extension_list']
+    if (extarray != null) {
+      for (var i=0; i<extarray.length; ++i) {
+        map[i] = extarray[i];
+      }
+      qsocdisplay.soc_display.setExtension(map);
+    }
+  }
+
+  // startup signal/slot connections
+  Component.onCompleted: {
+    SequenceListModel.onModelReset.connect(refreshSOCDisplay);
+    SequenceListModel.onMemberDataChanged.connect(refreshSOCDisplay);
+    SequenceListModel.onModelReset.connect(function() {qsequencelist.lvseq.currentIndex = 0;});
+
+  }
+
   ColumnLayout {
     /* split into two horizontal control containers */
     id: controls_container
@@ -27,8 +47,8 @@ ApplicationWindow {
       id: upper_half
       spacing: controls_container.anchors.margins
 
-      QSOCDisplay { id: displaycontainer }   /* QLeafletAssembly + controls */
-      QSequenceList { id: seqlist } /* ListView + Buttons */
+      QSOCDisplay { id: qsocdisplay }   /* QLeafletAssembly + controls */
+      QSequenceList { id: qsequencelist } /* ListView + Buttons */
     }
 
     Pane { /* filedialog controls */

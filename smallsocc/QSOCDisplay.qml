@@ -76,8 +76,8 @@ ColumnLayout {
         Layout.columnSpan: 2
         text: "Save Sequence Item"
         onClicked: {
-          if (!seqlist.lvseq.currentItem.setData( {'extension_list': soc_display.getExtension()} )) {
-            console.warn("failed to save 'extension_list' to item "+seqlist.lvseq.currentIndex);
+          if (!qsequencelist.lvseq.currentItem.setData( {'extension_list': soc_display.getExtension()} )) {
+            console.warn("failed to save 'extension_list' to item "+qsequencelist.lvseq.currentIndex);
           }
         }
       }

@@ -7,10 +7,6 @@ import "dynamicqml.js" as DynamicQML
 RowLayout {
   property alias lvseq: lvseq
 
-  Component.onCompleted: {
-    lvseq.model.onModelReset.connect(lvseq.refreshSOCDisplay);
-    lvseq.model.onModelReset.connect(function() {lvseq.currentIndex = 0;})
-  }
   Pane { /* Sequence List */
     id: seq_list_border
     clip: true
@@ -36,14 +32,6 @@ RowLayout {
 
       onCurrentIndexChanged: refreshSOCDisplay()
 
-      function refreshSOCDisplay() {
-        var map = {};
-        var extarray = SequenceListModel.getItem(lvseq.currentIndex).get()['extension_list']
-        for (var i=0; i<extarray.length; ++i) {
-          map[i] = extarray[i];
-        }
-        displaycontainer.soc_display.setExtension(map);
-      }
     }
   }
 
@@ -70,17 +58,9 @@ RowLayout {
         }
       }
     }
-    // QStylizedButton { /* insert before */
-    // Layout.preferredHeight: btn_height
-    // Layout.fillWidth: true
-    //   text: "\u2B11+"
-    //   font.pointSize: 20
-    //   onClicked: SequenceListModel.insertRows(lvseq.currentIndex, 1)
-    // }
     QStylizedButton { /* insert after */
       Layout.preferredHeight: btn_height
       Layout.fillWidth: true
-      // text: "\u2B10+"
       text: "+"
       font.pointSize: 16
       textcolor: "#007B08"
