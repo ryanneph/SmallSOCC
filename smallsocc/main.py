@@ -45,7 +45,10 @@ def qt_message_handler(mode, context, message):
         mode = 'FATAL'
     else:
         mode = 'DEBUG'
-    print('qml- {!s}:L{:d} -{!s}:  {!s}'.format(os.path.basename(context.file), context.line, mode, message))
+
+    try:    base = os.path.basename(context.file)
+    except: base = str(context.file)
+    print('qml- {!s}:L{!s} -{!s}:  {!s}'.format(base, context.line, mode, message))
 
 # TODO: DEBUG
 # load example sequence, otherwise blank

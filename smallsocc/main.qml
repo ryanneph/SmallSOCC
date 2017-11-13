@@ -35,6 +35,9 @@ ApplicationWindow {
     SequenceListModel.onMemberDataChanged.connect(refreshSOCDisplay);
     SequenceListModel.onModelReset.connect(function() {qsequencelist.lvseq.currentIndex = 0;});
 
+    // Keep SOC Display valid on window resize
+    mainwindow.onWidthChanged.connect(function() { refreshSOCDisplay(); });
+    mainwindow.onHeightChanged.connect(function() { refreshSOCDisplay(); });
   }
 
   ColumnLayout {
