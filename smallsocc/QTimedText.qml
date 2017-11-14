@@ -19,6 +19,9 @@ RowLayout {
     id: o_text
     text: ""
 
-    onTextChanged: o_timer.restart()
+    onTextChanged: {
+      o_timer.restart()
+      if (text != "") { console.info(text); }
+    }
   }
 }

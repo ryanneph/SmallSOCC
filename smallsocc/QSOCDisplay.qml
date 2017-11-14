@@ -8,7 +8,7 @@ ColumnLayout {
 
   QLeafletAssembly { /* Leaflet Display */
     id: soc_display
-    anchors.top: parent.top
+    Layout.alignment: Qt.AlignTop
     Layout.fillWidth: true /* dynamically size */
     Layout.preferredHeight: width /* keep square */
     Layout.minimumWidth: 200
@@ -20,7 +20,7 @@ ColumnLayout {
     id: leaflet_editor
     clip: true
     Layout.fillHeight: true
-    Layout.fillWidth: true
+    // Layout.preferredWidth: soc_display.width
 
     // TODO: DEBUG
     background: QDebugBorder {}
@@ -54,7 +54,7 @@ ColumnLayout {
         value: from
         Component.onCompleted: {
           // change spinbox value when leaflet is clicked
-          soc_display.onLeafletSelected.connect(function(index) { value = index; });
+          soc_display.onLeafletPressed.connect(function(index) { value = index; });
         }
       }
       SpinBox {
@@ -76,9 +76,19 @@ ColumnLayout {
         Layout.columnSpan: 2
         text: "Save Sequence Item"
         onClicked: {
-          if (!qsequencelist.lvseq.currentItem.setData( {'extension_list': soc_display.getExtension()} )) {
-            console.warn("failed to save 'extension_list' to item "+qsequencelist.lvseq.currentIndex);
+          var extmap = soc_display.getExtension();
+          if (qsequencelist.lvseq.currentItem == null) {
+            return;
+            //TODO: finish implementation here
+            // if no item is selected, insert new item at end of model and save leaflet config to it
+            SequenceListModel.insertRows()
+            qsequencelist.lvseq.currentIndex = SequenceListModel.rowCount()-1;
           }
+          if (!qsequencelist.lvseq.currentItem.setData( {'extension_list': extmap} )) {
+            console.warn("failed to save 'extension_list' to item "+qsequencelist.lvseq.currentIndex);
+            return;
+          }
+          footer_status.text = 'Leaflet configuration saved to item #' + qsequencelist.lvseq.currentIndex;
         }
       }
 

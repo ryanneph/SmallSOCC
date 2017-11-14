@@ -27,6 +27,7 @@ Leaflet {
   signal onPressed()
   signal onReleased()
   Component.onCompleted: {
+    // connect mouseArea signals to accessible component signals
     mousearea.onPressed.connect(root.onPressed);
     mousearea.onReleased.connect(root.onReleased);
   }
@@ -35,14 +36,20 @@ Leaflet {
   property int direction: Leaflet.Positive
   property int orientation: Leaflet.Horizontal
 
+  // reset x,y to start value
+  function reset() { extension = 0; }
+
+  // refresh x,y from the current extension value
+  function refreshXY() {
+    // TODO: handle collisions here too
+    x = xfromext();
+    y = yfromext();
+  }
   // update x/y from a change in extension
   property bool enableextsignal: true;
   onExtensionChanged: function() {
     if (enableextsignal) {
-      // set x,y appropriately
-      // TODO: handle collisions here too
-      x = xfromext();
-      y = yfromext();
+      refreshXY();
       // console.debug('extension change prompted update to x,y: x='+x+'  y='+y);
     }
   }

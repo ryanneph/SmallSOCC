@@ -23,15 +23,11 @@ RowLayout {
       verticalLayoutDirection: ListView.TopToBottom
       spacing: 2
       focus: true
-      currentIndex: 0
       anchors.fill: parent
       ScrollBar.vertical: ScrollBar {}
 
       model: SequenceListModel  // see main.py for contextvariable setting
       delegate: QSequenceDelegate {}
-
-      onCurrentIndexChanged: refreshSOCDisplay()
-
     }
   }
 
@@ -54,7 +50,7 @@ RowLayout {
       font.pointSize: 12
       onClicked: {
         if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex-1)) {
-          lvseq.currentIndex = lvseq.currentIndex-1;
+          lvseq.currentIndex -= 1;
         }
       }
     }
@@ -65,7 +61,11 @@ RowLayout {
       font.pointSize: 16
       textcolor: "#007B08"
       onClicked: {
-        SequenceListModel.insertRows(lvseq.currentIndex+1, 1)
+        if (lvseq.currentIndex < 0) { SequenceListModel.insertRows() }
+        else {
+          SequenceListModel.insertRows(lvseq.currentIndex+1, 1)
+          lvseq.currentIndex += 1;
+        }
       }
     }
     QStylizedButton { /* Edit Item Data */
@@ -85,9 +85,7 @@ RowLayout {
           "timecode_ms":    itemdata.timecode_ms,
         };
         d.open();
-        d.onSubmitted.connect( function(newdata) {
-          lvseq.currentItem.setData(newdata);
-        } );
+        d.onSubmitted.connect( function(newdata) { lvseq.currentItem.setData(newdata); } );
       }
     }
     QStylizedButton { /* remove */
@@ -96,7 +94,9 @@ RowLayout {
       text: "X"
       font.pointSize: 12
       textcolor: "#FF5151"
-      onClicked: SequenceListModel.removeRows(lvseq.currentIndex, 1)
+      onClicked: {
+        SequenceListModel.removeRows(lvseq.currentIndex, 1)
+      }
     }
     QStylizedButton { /* move down */
       Layout.preferredHeight: btn_height

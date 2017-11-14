@@ -18,7 +18,12 @@ ApplicationWindow {
   footer: QTimedText {id: "footer_status"; interval: 5000}
 
   // prompt a refresh of the SOC display using data from the currently selected SequenceItem
-  function refreshSOCDisplay() {
+  // note: this will also prompt a change in HW positions to match display
+  function updateSOCConfig() {
+    if (qsequencelist.lvseq.currentIndex < 0 || SequenceListModel.rowCount() <= 0) {
+      qsocdisplay.soc_display.reset();
+      return;
+    }
     var map = {};
     var extarray = SequenceListModel.getItem(qsequencelist.lvseq.currentIndex).get()['extension_list']
     if (extarray != null) {
@@ -31,13 +36,21 @@ ApplicationWindow {
 
   // startup signal/slot connections
   Component.onCompleted: {
-    SequenceListModel.onModelReset.connect(refreshSOCDisplay);
-    SequenceListModel.onMemberDataChanged.connect(refreshSOCDisplay);
-    SequenceListModel.onModelReset.connect(function() {qsequencelist.lvseq.currentIndex = 0;});
+    // deselect items when loading new list and reset display and hw
+    SequenceListModel.onModelReset.connect(function() {
+      qsequencelist.lvseq.currentIndex = -1;
+      updateSOCConfig();
+    });
 
-    // Keep SOC Display valid on window resize
-    mainwindow.onWidthChanged.connect(function() { refreshSOCDisplay(); });
-    mainwindow.onHeightChanged.connect(function() { refreshSOCDisplay(); });
+    // Keep SOC Display valid on window resize - no HW changes occur
+    mainwindow.onWidthChanged.connect(function() { qsocdisplay.soc_display.refresh(); });
+    mainwindow.onHeightChanged.connect(function() { qsocdisplay.soc_display.refresh(); });
+
+    // select nothing and prevent hardware from synchronizing on application launch
+    qsequencelist.lvseq.currentIndex = -1;
+
+    // keep SOC Display and HW in sync with currentIndex in listview
+    qsequencelist.lvseq.onCurrentItemChanged.connect(updateSOCConfig);
   }
 
   ColumnLayout {

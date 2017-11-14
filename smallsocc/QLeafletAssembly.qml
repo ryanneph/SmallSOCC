@@ -14,14 +14,14 @@ LeafletAssembly {
   clip: true
 
   // connect signals on construction
-  signal onLeafletSelected(int index)
+  signal onLeafletPressed(int index)
   Component.onCompleted: {
-    // register leaflet onSelected signals with arg carrying onLeafletSelected sigal
+    // register leaflet onSelected signals with arg carrying onLeafletPressed signal
     for (var i=0; i<leaflets.length; ++i) {
       leaflets[i].onPressed.connect( function() {
         // function closure - otherwise i== .length always
         var ii = i;
-        return function() { root.onLeafletSelected(ii); };
+        return function() { root.onLeafletPressed(ii); };
       }());
     }
   }
@@ -53,6 +53,19 @@ LeafletAssembly {
     } else {
       // return only requested extension
       return leaflets[index].extension;
+    }
+  }
+
+  // force refresh of leaflet positions without modifying stored extension data
+  function refresh() {
+    for (var i=0; i<leaflets.length; ++i) {
+      leaflets[i].refreshXY();
+    }
+  }
+  // force reset of leaflet extensions/positions to baseline/starting
+  function reset() {
+    for (var i=0; i<leaflets.length; ++i) {
+      leaflets[i].reset();
     }
   }
 

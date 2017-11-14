@@ -242,7 +242,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
 
     ## METHODS
     # Virtual Base Method
-    @pyqtSlot(QtCore.QModelIndex, result=int)
+    @pyqtSlot(result=int)
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self._items)
 
@@ -281,11 +281,16 @@ class SequenceListModel(QtCore.QAbstractListModel):
         return flags
 
     # Virtual Base Method
+    @pyqtSlot(result=bool)
     @pyqtSlot(int, int, result=bool)
-    def insertRows(self, row: int, count: int, parent=QtCore.QModelIndex()):
+    def insertRows(self, row: int=-1, count: int=1, parent=QtCore.QModelIndex()):
         """ insert default constructed objects at row """
+        if count < 1: return False
         if self.rowCount() <= 0:
             row = 0
+        elif row < 0:
+            # add to end of list
+            row = self.rowCount()
         self.beginInsertRows(parent, row, row+count-1)
         for i in range(count):
             self._items.insert(row+i, SequenceItem(parent=self))
@@ -298,14 +303,17 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(int, int, result=bool)
     def removeRows(self, row: int, count: int, parent=QtCore.QModelIndex()):
         """ remove a number of rows from model """
-        if self.rowCount() <= 0:
+        if self.rowCount() <= 0 or row < 0 or count < 1:
             return False
         self.beginRemoveRows(QtCore.QModelIndex(), row, row+count-1)
         for i in range(count):
             self.disconnectSignals(self._items[row+i])
         del self._items[row:row+count]
         self.endRemoveRows()
-        self.onMemberDataChanged.emit()
+        if self.rowCount() > 0:
+            self.onMemberDataChanged.emit()
+        else:
+            self.onModelReset.emit()
         return True
 
     # Virtual Base Method

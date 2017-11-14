@@ -42,10 +42,9 @@ class Leaflet(QQuickItem):
         self._index = Leaflet.next_available
         Leaflet.next_available += 1
 
-    # extend QQuickItem::componentComplete()
     def componentComplete(self):
         QQuickItem.componentComplete(self)
-        #  self.extension = 0 # reset leaflets to home position
+        self.enableHWLink()
 
     @pyqtProperty(int, notify=onIndexChanged)
     def index(self):
@@ -73,10 +72,20 @@ class Leaflet(QQuickItem):
         # bounds checking
         if (val < Leaflet._min_ext): val = Leaflet._min_ext
         elif (val > Leaflet._max_ext): val = Leaflet._max_ext
-        print('publishing to HW - leaflet #{:d} ext: {:d}'.format(self.index, val))
         self._extension = val
-        self._hwsoc.set_position(self.index, self.extension)
         self.onExtensionChanged.emit(val)
+
+    def publishToHW(self, val):
+        print('publishing to HW - leaflet #{:d} ext: {:d}'.format(self.index, val))
+        self._hwsoc.set_position(self.index, self.extension)
+
+    @pyqtSlot()
+    def enableHWLink(self):
+        self.onExtensionChanged.connect(self.publishToHW)
+
+    @pyqtSlot()
+    def disableHWLink(self):
+        self.onExtensionChanged.disconnect(self.publishToHW)
 
 # make Leaflet accessible to qml
 qmlRegisterType(Leaflet, 'com.soc.types.Leaflets', 1, 0, 'Leaflet')

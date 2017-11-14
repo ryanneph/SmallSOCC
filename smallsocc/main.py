@@ -65,11 +65,11 @@ except Exception as e:
         SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=1500, description="descriptive text4"),
     ]
     samplelistmodel = sequence.SequenceListModel(elements=sample_sequenceitems)
-    #  samplelistmodel.writeToJson('test_output.json')
 
 def preExit():
     """ occurs just before Qt application exits (bound to QGuiApplication.aboutToQuit() signal) """
-    samplelistmodel.writeToJson(os.path.join(TEMP, 'test_write.json'))
+    #  samplelistmodel.writeToJson(os.path.join(TEMP, 'test_write.json'))
+    pass
 # TODO: END DEBUG
 
 
