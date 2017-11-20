@@ -70,7 +70,7 @@ if __name__ == '__main__':
         samplelistmodel = sequence.SequenceListModel(elements=sample_sequenceitems)
     # TODO: END DEBUG
 
-    HWSOC(8) # init singleton instance for controlling hardware
+    HWSOC(8, HID='239A:8011') # init singleton instance for controlling hardware
 
     # integrate qml logging with python logging
     QtCore.qInstallMessageHandler(qt_message_handler)

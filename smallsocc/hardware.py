@@ -3,22 +3,26 @@ from borg import Borg
 import serial
 from serial.tools import list_ports
 
-_BAUD = 115200
-_USB_HID = '239A:8011'  # hardwareID for detecting device
-
 class HWSOC(Borg):
     """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
     _shared_state = {}
 
-    def __init__(self, nleaflets=None):
+    def __init__(self, nleaflets=None, HID=None, BAUD=115200):
+        """
+        Args:
+            HID (str):  USB hardware id, if present: only match exactly and fallback to EMULATOR_MODE otherwise
+            BAUD (int): Serial baud rate - must match serial device baud exactly
+        """
         Borg.__init__(self)
         try: self._fserial
         except:
             self._fserial = None
             self.EMULATOR_MODE = False
             self._nleaflets = 0
-        if nleaflets:
-            self._nleaflets = nleaflets
+
+        self._USB_HID=HID
+        self._BAUD = BAUD
+        self._nleaflets = nleaflets
         self._init_hw()
 
     def _activate_emulator_mode(self):
@@ -29,25 +33,24 @@ class HWSOC(Borg):
         print('EMULATOR MODE ACTIVATED')
 
     def _init_hw(self):
-        if self._fserial:
+        if self.EMULATOR_MODE or self._fserial:
             # no need to reinit
             return
-        match = list_ports.grep(_USB_HID)
         try:
-            PORT = next(match).device
-        except StopIteration:  # no HID matches
-            try:
+            # try to exactly match by HID
+            if self._USB_HID:
+                match = list_ports.grep(self._USB_HID)
+                PORT = next(match).device
+            # try to match first available serial device
+            else:
                 if os.name == 'nt':
                     PORT = (list_ports.comports()[-1]).device
                 else:
                     PORT = (list_ports.comports()[0]).device
-            except:
-                self._activate_emulator_mode()
-                return
-        try:
-            self._fserial = serial.Serial(PORT, _BAUD, timeout=0, writeTimeout=0)
+                self._fserial = serial.Serial(PORT, self._BAUD, timeout=0, writeTimeout=0)
         except:
             self._activate_emulator_mode()
+            return
 
     @property
     def nleaflets(self):
