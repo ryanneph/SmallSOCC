@@ -14,12 +14,11 @@ class HWSOC(Borg):
             BAUD (int): Serial baud rate - must match serial device baud exactly
         """
         Borg.__init__(self)
-        try: self._fserial
-        except:
-            self._fserial = None
-            self.EMULATOR_MODE = False
-            self._nleaflets = 0
+        if '_fserial' in self.__dict__:
+            return
 
+        self._fserial = None
+        self.EMULATOR_MODE = False
         self._USB_HID=HID
         self._BAUD = BAUD
         self._nleaflets = nleaflets
@@ -32,25 +31,53 @@ class HWSOC(Borg):
         self._fserial = None
         print('EMULATOR MODE ACTIVATED')
 
+    @staticmethod
+    def device_info(portinfo):
+        return "deviceid=\"{}:{}\" on port=\"{!s}\" :: {} {} ({})".format(
+            portinfo.vid, portinfo.pid, portinfo.name, portinfo.manufacturer, portinfo.product, portinfo.description
+        )
+
     def _init_hw(self):
         if self.EMULATOR_MODE or self._fserial:
             # no need to reinit
             return
-        try:
-            # try to exactly match by HID
-            if self._USB_HID:
-                match = list_ports.grep(self._USB_HID)
-                PORT = next(match).device
-            # try to match first available serial device
-            else:
-                if os.name == 'nt':
-                    PORT = (list_ports.comports()[-1]).device
-                else:
-                    PORT = (list_ports.comports()[0]).device
+
+        portlist = []
+        # try to exactly match by HID
+        if self._USB_HID:
+            match = list_ports.grep(self._USB_HID)
+            try: portlist.append(next(match))
+            except StopIteration:
+                print("Warning: no serial devices with deviceid=\"{!s}\" were found".format(self._USB_HID))
+
+        # try to match first available serial device
+        if not portlist:
+            print("Discovering available serial devices...")
+            portlist = list_ports.comports()
+            for p in list(portlist):
+                # TODO: this may be an imperfect check for a valid device
+                if p.vid is None:
+                    portlist.remove(p)
+
+        for p in portlist:
+            PORT = p.device
+            try:
                 self._fserial = serial.Serial(PORT, self._BAUD, timeout=0, writeTimeout=0)
-        except:
+                print("Connected to serial device ({!s})".format(self.device_info(p)))
+                break
+            except serial.serialutil.SerialException:
+                continue
+
+        if self._fserial is None:
+            if not portlist:
+                print("Warning: no serial devices were discovered")
+            else:
+                print("Warning: failed to open connection to any of the discovered serial devices:")
+                for p in portlist:
+                    print("  - " + self.device_info(p))
+                    #  print(p.device, p.name, p.description, p.hwid, p.vid, p.pid, p.serial_number, p.location, p.manufacturer, p.product, p.interface)
             self._activate_emulator_mode()
-            return
+        return
 
     @property
     def nleaflets(self):
