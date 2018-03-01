@@ -95,6 +95,13 @@ class HWSOC(Borg):
         self._fserial.write(bytes([ 0xFF, 0xD7, idx ]) + pos.to_bytes(2, byteorder='big', signed=False) )
         self._fserial.reset_input_buffer()
 
+    def set_all_positions(self, poslist):
+        if self.EMULATOR_MODE:
+            return
+        if len(poslist) > self.nleaflets or not poslist:
+            raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
+        self._fserial.write(bytes([ 0xFF, 0xD7 ]) + b''.join([pos.to_bytes(2, byteorder='big', signed=False) for pos in poslist]))
+
     def go_home(self):
         for i in range(self.nleaflets):
             self.set_position(i, 0)

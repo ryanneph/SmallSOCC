@@ -6,6 +6,8 @@ implements data structure containing a single "control point" item in a radiothe
 with implementation for read-from-file and write-to-file methods
 
 """
+import sys
+import os
 import math
 from enum import Enum, unique
 import copy
@@ -183,6 +185,12 @@ class SequenceListModel(QtCore.QAbstractListModel):
         for item in self._items:
             self.connectSignals(item)
 
+    @staticmethod
+    def cleanpath(p):
+        if sys.platform != 'win32':
+            p = '/' + p
+        return os.path.abspath(os.path.expanduser(p))
+
     @classmethod
     def fromJson(cls, fname):
         self = cls()
@@ -192,6 +200,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(str, result=bool)
     def readFromJson(self, fname):
         """ Constructor from json file of SequenceItems """
+        fname = self.cleanpath(fname)
         with open(fname, 'r') as f:
             d = json.load(f)
 
@@ -214,6 +223,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
     @pyqtSlot(str, result=bool)
     def writeToJson(self, fname: str):
         """ write all member vars to json for later recall """
+        fname = self.cleanpath(fname)
         try:
             memlist = []
             for mem in self._items:

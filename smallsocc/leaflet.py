@@ -76,8 +76,9 @@ class Leaflet(QQuickItem):
         self.onExtensionChanged.emit(val)
 
     def publishToHW(self, val):
-        print('publishing to HW - leaflet #{:d} ext: {:d}'.format(self.index, val))
-        self._hwsoc.set_position(self.index, self.extension)
+        #  print('publishing to HW - leaflet #{:d} ext: {:d}'.format(self.index, val))
+        #  self._hwsoc.set_position(self.index, self.extension)
+        pass
 
     @pyqtSlot()
     def enableHWLink(self):

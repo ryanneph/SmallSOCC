@@ -23,6 +23,11 @@ LeafletAssembly {
         var ii = i;
         return function() { root.onLeafletPressed(ii); };
       }());
+
+      leaflets[i].onExtensionChanged.connect( function() {
+        // function closure - otherwise i== .length always
+        root.onExtensionChanged();
+      } )
     }
   }
 
