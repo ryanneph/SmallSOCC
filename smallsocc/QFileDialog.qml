@@ -15,9 +15,8 @@ FileDialog {
   onAccepted: {
     // cleanup url to get path
     var p = this.fileUrl.toString();
-    console.debug(p)
     path = p.replace(/^(file:\/{3})|(qrc:\/{3})|(http:\/{3})/, "");
-    console.debug(path)
+    path = PathHandler.cleanpath(path)
     onSubmitted(this); // emit signal and return this object as argument
   }
 }

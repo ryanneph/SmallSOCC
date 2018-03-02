@@ -15,6 +15,7 @@ LeafletAssembly {
 
   // connect signals on construction
   signal onLeafletPressed(int index)
+  signal onLeafletReleased(int index)
   Component.onCompleted: {
     // register leaflet onSelected signals with arg carrying onLeafletPressed signal
     for (var i=0; i<leaflets.length; ++i) {
@@ -24,10 +25,17 @@ LeafletAssembly {
         return function() { root.onLeafletPressed(ii); };
       }());
 
-      leaflets[i].onExtensionChanged.connect( function() {
+      leaflets[i].onReleased.connect( function() {
         // function closure - otherwise i== .length always
-        root.onExtensionChanged();
-      } )
+        var ii = i;
+        return function() { root.onLeafletReleased(ii); };
+      }());
+
+      // leaflets[i].onExtensionChanged.connect( function() {
+      //   // function closure - otherwise i== .length always
+      //   var ii = i;
+      //   return function() { root.onExtensionChanged(ii); };
+      // }() );
     }
   }
 

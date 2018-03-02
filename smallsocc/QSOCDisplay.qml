@@ -68,6 +68,8 @@ ColumnLayout {
         value: soc_display.leaflets[leaflet_spinbox.value].extension
         onValueModified: {
           soc_display.setExtension(leaflet_spinbox.value, value)
+          // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
+          soc_display.onLeafletReleased(leaflet_spinbox.value)
         }
       }
       Button { /* Save SequenceItem to ListModel */
@@ -92,27 +94,27 @@ ColumnLayout {
         }
       }
 
-      //DEBUG
-      Label {
-        text: "win width:"
-        Layout.column: 0
-        Layout.row: 3
-      }
-      Label {
-        text: mainwindow.width
-        Layout.column: 1
-        Layout.row: 3
-      }
-      Label {
-        text: "win height:"
-        Layout.column: 0
-        Layout.row: 4
-      }
-      Label {
-        text: mainwindow.height
-        Layout.column: 1
-        Layout.row: 4
-      }
+      // //DEBUG
+      // Label {
+      //   text: "win width:"
+      //   Layout.column: 0
+      //   Layout.row: 3
+      // }
+      // Label {
+      //   text: mainwindow.width
+      //   Layout.column: 1
+      //   Layout.row: 3
+      // }
+      // Label {
+      //   text: "win height:"
+      //   Layout.column: 0
+      //   Layout.row: 4
+      // }
+      // Label {
+      //   text: mainwindow.height
+      //   Layout.column: 1
+      //   Layout.row: 4
+      // }
     }
   }
 }

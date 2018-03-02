@@ -21,10 +21,11 @@ from hardware import HWSOC
 import leaflet
 import leafletassembly
 import sequence
+import pathhandler
 
 # define paths
 PARENT = os.path.abspath(dirname(dirname(__file__)))
-TEST_FILES = os.path.join(PARENT, 'test_files')
+TEST_FILES = os.path.join(PARENT, os.path.pardir, 'test_files')
 TEMP = os.path.join(PARENT, 'temp')
 
 # TODO: Add proper python logger and integrate with Qt Message Handler
@@ -62,10 +63,10 @@ if __name__ == '__main__':
         # SAMPLE ITEMS FOR DEBUG
         from sequence import SequenceItem, SequenceItemType
         sample_sequenceitems = [
-            SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=1500, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
+            SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=0, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
             SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
-            SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=1500, description="descriptive text3"),
-            SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=1500, description="descriptive text4"),
+            SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=3000, description="descriptive text3"),
+            SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=4500, description="descriptive text4"),
         ]
         samplelistmodel = sequence.SequenceListModel(elements=sample_sequenceitems)
     # TODO: END DEBUG
@@ -90,6 +91,8 @@ if __name__ == '__main__':
     rootContext.setContextProperty("mainwindow_title", 'SOC Controller - v{!s}(alpha)'.format(VERSION_FULL))
     # make seq. list model accessible to qml-listview
     rootContext.setContextProperty("SequenceListModel", samplelistmodel)
+    pathhandler_instance = pathhandler.PathHandler()
+    rootContext.setContextProperty("PathHandler", pathhandler_instance)
 
     # load layout
     engine.load(QtCore.QUrl(os.path.join(dirname(__file__), 'main.qml')))

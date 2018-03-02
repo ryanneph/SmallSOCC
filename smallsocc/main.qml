@@ -31,6 +31,8 @@ ApplicationWindow {
         map[i] = extarray[i];
       }
       qsocdisplay.soc_display.setExtension(map);
+      // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
+      qsocdisplay.soc_display.onLeafletReleased(-1)
     }
   }
 
