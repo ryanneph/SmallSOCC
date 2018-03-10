@@ -1,6 +1,6 @@
 
-// dynamically create modal dialogue window given a component URL and parent pointer
-function createModalDialog(parent, url, map) {
+// dynamically create visual object (Qt Item) given a component URL and parent pointer
+function createDynamicObject(parent, url, map) {
   var component = Qt.createComponent(url);
   if (component.status != Component.Ready) {
     if (component.status == Component.Error) {

@@ -15,7 +15,7 @@ Dialog {
     "rot_couch_deg":  text_couch.text,
     "rot_gantry_deg": text_gantry.text,
     "description":    text_desc.text,
-    "timecode_ms":    text_timecode.text,
+    "timecode_ms":    text_timecode.text
     // "extension_list": [0,0,0,0,0,0,0,0]
   })
 
@@ -41,14 +41,14 @@ Dialog {
     TextField {
       id: text_couch
       Layout.fillWidth: true
+      validator: IntValidator {bottom: -360; top: 360}
     }
-
     Label { text: "Gantry Angle (Deg):" }
     TextField {
       id: text_gantry
       Layout.fillWidth: true
+      validator: IntValidator {bottom: -360; top: 360}
     }
-
     Label { text: "Description" }
     TextField {
       id: text_desc
@@ -58,6 +58,7 @@ Dialog {
     TextField {
       id: text_timecode
       Layout.fillWidth: true
+      validator: DoubleValidator {bottom: 0}
     }
   }
 }

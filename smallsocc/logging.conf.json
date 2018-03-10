@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "formatters": {
+    "full": {
+      "format": "%(asctime)s- %(filename)s:L%(lineno)d -%(levelname)s: %(message)s"
+    },
+    "simple": {
+      "format": "%(filename)s:L%(lineno)d -%(levelname)s: %(message)s"
+    },
+    "qml": {
+      "format": "%(message)s"
+    }
+  },
+  "handlers": {
+    "console": {
+      "class": "logging.StreamHandler",
+      "level": "DEBUG",
+      "formatter": "simple",
+      "stream": "ext://sys.stdout"
+    },
+    "console-qml": {
+      "class": "logging.StreamHandler",
+      "level": "DEBUG",
+      "formatter": "qml",
+      "stream": "ext://sys.stdout"
+    }
+  },
+  "loggers": {
+    "qml": {
+      "level": "WARNING",
+      "handlers": ["console-qml"],
+      "propagate": false
+    }
+  },
+  "root": {
+    "level": "WARNING",
+    "handlers": ["console"]
+  }
+}

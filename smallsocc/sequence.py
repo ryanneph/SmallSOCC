@@ -13,63 +13,30 @@ from enum import Enum, unique
 import copy
 import json
 import json_serializer
+import logging
 from datetime import datetime
 from PyQt5 import QtCore, QtQml
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, pyqtProperty
 from PyQt5.QtQml import qmlRegisterType
 from sequence_members import _sequenceitem_public_members, SequenceItemType, datetimefmt
 
+logger = logging.getLogger(__name__)
 
 """ Defines user roles for accessing data items in SequenceItem Object """
-SequenceUserRoles = Enum("SequenceUserRoles",
-        list(_sequenceitem_public_members.keys()), start=Qt.UserRole+1)
+SequenceUserRoles = Enum("SequenceUserRoles", list(_sequenceitem_public_members.keys()), start=Qt.UserRole)
 
-def _getEnumMemberFromInt(enum: Enum, idx: int):
+def roleInt2Name(idx: int):
     """ helper for accessing enum member from its mapped integer value """
-    return list(enum.__members__.values())[idx]
+    e = SequenceUserRoles
+    if Qt.UserRole <= idx < Qt.UserRole+len(e.__members__):
+        return (list(e.__members__.values())[idx-Qt.UserRole]).name
+    else:
+        return None
 
 
-#  # TODO: NOT YET IMPLEMENTED
-#  # Define factories that produce getter/setter methods to register as QML properties
-#  def getFactory(key):
-#      def getter(self):
-#          return QtCore.QVariant(self._members[key].basicvalue)
-#      return getter
-
-#  def setFactory(key):
-#      def setter(self, val: object):
-#          self._members[key].value = val
-#      return setter
-
-#  # class decorator that registers Named Members as class properties accessible to QML
-#  class register_qml_properties:
-#      def __init__(self, property_map):
-#          print('starting to decorate')
-#          self.property_map = property_map
-
-#      def __call__(self, cls):
-#          print('done decorating')
-#          def constructor(**kwargs):
-#              print("constructing class")
-#              cls(**kwargs)
-#              print("registering properties")
-#              #  self.register(cls)
-#              return cls
-#          return constructor
-
-#      def register(self, cls):
-#          """ register NamedMembers as accessible properties to qml engine """
-#          for k, v in self.property_map.items():
-#              print('registering property with qml: {!s} {}'.format(type(v.basicvalue), k))
-#              setattr(cls, str(k), pyqtProperty(type(v.basicvalue), fget=getFactory(k), fset=setFactory(k)))
-
-#  @register_qml_properties(_sequenceitem_public_members)
 class SequenceItem(QtCore.QObject):
     """ Backend representation for distinct setting of leaflet positions, beam angles,
     and occurence time in a treatment plan """
-
-    # signal activation cascades to SequenceListModel
-    onMemberDataChanged = pyqtSignal()
 
     def __init__(self, parent=None, **kwargs):
         """
@@ -79,6 +46,7 @@ class SequenceItem(QtCore.QObject):
         QtCore.QObject.__init__(self, parent)
         # private members
         self._members = copy.deepcopy(_sequenceitem_public_members)
+        self._memberstate = ""
 
         if len(kwargs):
             # handle angle setting in degrees
@@ -89,10 +57,16 @@ class SequenceItem(QtCore.QObject):
                     del kwargs[k]
 
             # set from kwargs
-            for k in self._members.keys():
-                #  print('setting self._members[{!s}] to {!s}'.format(k, kwargs[k]))
-                try: self._members[k].value = kwargs[k]
-                except: continue
+            for k, v in kwargs.items():
+                try:
+                    if k not in self._members:
+                        logger.error('"{!s}" is not a property of SequenceItem'.format(k))
+                    else:
+                        logger.debug('setting self._members[{!s}] to {!s}'.format(k, kwargs[k]))
+                        self._members[k].value = kwargs[k]
+                except:
+                    logger.debug('failed to set SequenceItem property: {!s}'.format(k))
+                    continue
 
     def __repr__(self):
         s = ''
@@ -101,12 +75,19 @@ class SequenceItem(QtCore.QObject):
             s += '{!s}: {!s}'.format(k, v.value)
         return s
 
+    def __getitem__(self, key):
+        self.get(key)
+
+    def __setitem__(self, key, val):
+        self.set(key, val)
+
     def packDict(self):
         """ construct a dictionary of (member name, basicvalue) pairs """
         d = {}
         for k, v in self._members.items():
-            #  print(f'{k} is a {type(v.value)} with val: {v.value} and basicval: {v.basicvalue}')
-            d[k] = v.basicvalue
+            if not v.volatile:
+                logger.debug('{} is a {} with val: {} and basicval: {}'.format(k, type(v.value), v.value, v.basicvalue))
+                d[k] = v.basicvalue
         return d
 
     @classmethod
@@ -149,17 +130,27 @@ class SequenceItem(QtCore.QObject):
         if isinstance(val, QtQml.QJSValue):
             val = val.toVariant()
 
-        if val:
-            print(f'setting new value for \"{key}\": {val}')
+        if val is not None:
+            logger.debug(f'setting new value for \"{key}\": {val}')
             self._members[key].value = val
-        elif key:
+        elif key is not None:
             for k, v in key.items():
-                #  print(type(k), type(v))
-                print(f'setting new value for \"{k}\": {v}')
+                logger.debug(f'setting new value for \"{k}\": {v}')
                 self._members[k].value = v
         else: return False
-        self.onMemberDataChanged.emit()
+        self.setModified()
         return True
+
+    # signal activation cascades to SequenceListModel
+    onMemberDataChanged = pyqtSignal()
+    def setModified(self):
+        self._members['is_unsaved'].value = True
+        self.onMemberDataChanged.emit()
+
+    def setUnmodified(self):
+        self._members['is_unsaved'].value = False
+        self.onMemberDataChanged.emit()
+
 
 
 class SequenceListModel(QtCore.QAbstractListModel):
@@ -170,9 +161,6 @@ class SequenceListModel(QtCore.QAbstractListModel):
           self.getItem(), python will garbage collect the SequenceItem instance and qml will throw an error
     """
 
-    onModelReset = pyqtSignal()
-    onMemberDataChanged = pyqtSignal()
-
     ## CONSTRUCTORS
     def __init__(self, *args, **kwargs):
         """ initialize from dictionary if kwarg 'elements=[]' is provided """
@@ -181,9 +169,6 @@ class SequenceListModel(QtCore.QAbstractListModel):
             self._items = kwargs['elements']
         except:
             self._items = []
-
-        for item in self._items:
-            self.connectSignals(item)
 
     @classmethod
     def fromJson(cls, fname):
@@ -202,15 +187,12 @@ class SequenceListModel(QtCore.QAbstractListModel):
             for itemdict in d['SequenceList']:
                 seqitems.append(SequenceItem(**itemdict, parent=self))
         except Exception as e:
-            print(f"Error in {cls.__name__}.readFromJson(): failed to read SequenceList from file \"{fname}\"")
+            logger.exception('Error in {}.readFromJson(): failed to read SequenceList from file "{}"'.format(self, fname))
             return False
 
         self.beginResetModel()
         self._items = seqitems
-        for item in self._items:
-            self.connectSignals(item)
         self.endResetModel();
-        self.onModelReset.emit()
         return True
 
     @pyqtSlot(str, result=bool)
@@ -230,17 +212,26 @@ class SequenceListModel(QtCore.QAbstractListModel):
 
             with open(fname, 'w') as f:
                 f.write(js)
-        except: return False
 
+            for idx, mem in enumerate(self._items):
+                logger.debug('setting member unsaved to false')
+                mem.setUnmodified()
+                self.redrawItemDelegate(idx)
+
+        except Exception as e:
+            logger.exception(e)
+            return False
         return True
 
-    def connectSignals(self, obj):
-        """connect child's signal to parent accessible signal"""
-        obj.onMemberDataChanged.connect(self.onMemberDataChanged)
-
-    def disconnectSignals(self, obj):
-        """Disconnect all child signal handlers"""
-        obj.onMemberDataChanged.disconnect(self.onMemberDataChanged)
+    def redrawItemDelegate(self, idx):
+        try:
+            if isinstance(idx, int):
+                modelindex = self.createIndex(idx, 0)
+            else:
+                modelindex = idx
+            self.dataChanged.emit(modelindex, modelindex)
+        except:
+            logger.exception('delegate refresh failed for index "{}"'.format(str(idx)))
 
     ## METHODS
     # Virtual Base Method
@@ -257,16 +248,30 @@ class SequenceListModel(QtCore.QAbstractListModel):
 
     # Virtual Base Method
     @pyqtSlot(QtCore.QModelIndex, int, result=QtCore.QVariant)
+    @pyqtSlot(int, int, result=QtCore.QVariant)
+    @pyqtSlot(int, str, result=QtCore.QVariant)
+    @pyqtSlot(QtCore.QModelIndex, result=QtCore.QVariant)
+    @pyqtSlot(int, result=QtCore.QVariant)
     def data(self, index: QtCore.QModelIndex, role: int=Qt.DisplayRole):
         """ Get data item indexed by index.row() and member indicated by role """
-        #  print("trying to get {}".format(_getEnumMemberFromInt(SequenceUserRoles, role-Qt.UserRole-1)))
-        if not index.isValid(): return None
-        if index.row() > self.rowCount(): return None
+        if isinstance(index, int):
+            index = self.createIndex(index, 0)
+        if not index.isValid():
+            return False
+
+        if isinstance(role, str):
+            rolename = role
+            role = SequenceUserRoles[rolename].value
+        elif isinstance(role, int):
+            rolename = roleInt2Name(role)
+
+        if index.row() > self.rowCount(): return False
         if role == Qt.DisplayRole or role == Qt.EditRole:
-            return self._items[index.row()]
-        if Qt.UserRole < role < Qt.UserRole+len(SequenceUserRoles.__members__)+1:
+            return self._items[index.row()].get()
+        if Qt.UserRole <= role < Qt.UserRole+len(SequenceUserRoles.__members__):
+            logger.debug('accessing delegate data role: {}:{}'.format(role, rolename))
             sequenceitem = self._items[index.row()]
-            val = sequenceitem._members[_getEnumMemberFromInt(SequenceUserRoles, role-Qt.UserRole-1).name].basicvalue
+            val = sequenceitem._members[rolename].basicvalue
             return val
         return None
 
@@ -296,9 +301,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.beginInsertRows(parent, row, row+count-1)
         for i in range(count):
             self._items.insert(row+i, SequenceItem(parent=self))
-            self.connectSignals(self._items[row+i])
         self.endInsertRows()
-        self.onMemberDataChanged.emit()
         return True
 
     # Virtual Base Method
@@ -308,14 +311,11 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if self.rowCount() <= 0 or row < 0 or count < 1:
             return False
         self.beginRemoveRows(QtCore.QModelIndex(), row, row+count-1)
-        for i in range(count):
-            self.disconnectSignals(self._items[row+i])
         del self._items[row:row+count]
         self.endRemoveRows()
-        if self.rowCount() > 0:
-            self.onMemberDataChanged.emit()
-        else:
-            self.onModelReset.emit()
+        if self.rowCount() <=0:
+            self.beginResetModel()
+            self.endResetModel();
         return True
 
     # Virtual Base Method
@@ -338,28 +338,43 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.beginMoveRows(QtCore.QModelIndex(), sourceRow, sourceRow+count-1, QtCore.QModelIndex(), destIndex)
         for i in range(count):
             self._items.insert(destinationChild, self._items.pop(sourceRow+i))
-            #  print(f'moving from {sourceRow} to {destinationChild}')
+            logger.debug('moving from {} to {}'.format(sourceRow, destinationChild))
         self.endMoveRows()
-        self.onMemberDataChanged.emit()
         return True
 
     # Virtual Base Method
-    @pyqtSlot(QtCore.QModelIndex, QtCore.QVariant, result=bool)
+    @pyqtSlot(QtCore.QModelIndex, QtQml.QJSValue, result=bool)
+    @pyqtSlot(int, QtQml.QJSValue,      result=bool)
+    @pyqtSlot(int, QtQml.QJSValue, str, result=bool)
     def setData(self, index: QtCore.QModelIndex, value: QtCore.QVariant, role: int=Qt.EditRole):
         """ modify the value of data object at index """
-        print(index.row(), value, role, _getEnumMemberFromInt(SequenceUserRoles, role))
+        if isinstance(index, int):
+            index = self.createIndex(index, 0)
         if not index.isValid():
             return False
 
-        if role == Qt.EditRole:
+        if isinstance(role, str):
+            rolename = role
+            role = SequenceUserRoles[rolename].value
+        elif isinstance(role, int):
+            rolename = roleInt2Name(role)
+
+        if isinstance(value, QtQml.QJSValue):
+            value = value.toVariant()
+
+        logger.debug("setting data at row {} to {} using role {}: {}".format(index.row(), value, role, rolename))
+
+        if role == Qt.EditRole and isinstance(value, SequenceItem):
             self._items[index.row()] = value
             self.dataChanged.emit(index, index)
-        elif Qt.UserRole<role<Qt.UserRole+len(SequenceUserRoles.__members__)+1:
-            print('setting for role {!s}'.format(_getEnumMemberFromInt(SequenceUserRoles, role)))
+        elif isinstance(value, dict):
+            for k, v in value.items():
+                self._items[index.row()][k] = v
+        elif Qt.UserRole <= role < Qt.UserRole+len(SequenceUserRoles.__members__):
+            self._items[index.row()][rolename] = value
         else:
             return False
-
-        self.onMemberDataChanged.emit()
+        self.redrawItemDelegate(index)
         return True
 
     # Virtual Base Method

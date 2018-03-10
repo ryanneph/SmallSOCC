@@ -5,7 +5,7 @@ class NamedMember():
     """ Defines a key-value pair with associated getter/setter functions for dynamically making
     members available to qml and file read/write operations """
 
-    def __init__(self, name: str, value: object=None, getter=None, setter=None, value_initializer=None):
+    def __init__(self, name: str, value: object=None, getter=None, setter=None, value_initializer=None, volatile=False):
         """ support for value_initializer callables to support default init of certain varables
         such as datetime.now() which would otherwise always have the now() from parsing time """
         self.name = name
@@ -17,11 +17,13 @@ class NamedMember():
         self._getter = getter
         self._setter = setter
         self._value_initializer = value_initializer
+        self.volatile = volatile
 
     def __copy__(self):
         return NamedMember(name=copy.copy(self.name), value=copy.copy(self._value),
                            getter=self._getter, setter=self._setter,
-                           value_initializer=self._value_initializer)
+                           value_initializer=self._value_initializer,
+                           volatile=self.volatile)
 
     def __deepcopy__(self, memodict):
         return NamedMember(
@@ -29,7 +31,8 @@ class NamedMember():
             value  = copy.deepcopy(self._value, memodict),
             getter = copy.deepcopy(self._getter, memodict),
             setter = copy.deepcopy(self._setter, memodict),
-            value_initializer = copy.deepcopy(self._value_initializer, memodict)
+            value_initializer = copy.deepcopy(self._value_initializer, memodict),
+            volatile = copy.deepcopy(self.volatile, memodict)
         )
 
     @property

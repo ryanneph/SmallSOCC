@@ -73,19 +73,18 @@ RowLayout {
       Layout.fillWidth: true
       text: "Edit"
       onClicked: {
-        // Access SequenceItem properties through lvseq.model.get(lvseq.currentIndex)[property]
         if (!lvseq.currentItem) { console.debug('current item is null'); return null; }
-        var itemdata = lvseq.currentItem.getData();
+        var itemdata = SequenceListModel.data(lvseq.currentIndex);
         if (!itemdata) { console.debug('data for current item is null'); return null; }
-        var d = DynamicQML.createModalDialog(mainwindow, "QEditDialog.qml");
+        var d = DynamicQML.createDynamicObject(mainwindow, "QEditDialog.qml");
         d.formdata = {
           "rot_couch_deg":  itemdata.rot_couch_deg,
           "rot_gantry_deg": itemdata.rot_gantry_deg,
           "description":    itemdata.description,
           "timecode_ms":    itemdata.timecode_ms,
         };
+        d.onSubmitted.connect( function(newdata) { SequenceListModel.setData(lvseq.currentIndex, newdata); } );
         d.open();
-        d.onSubmitted.connect( function(newdata) { lvseq.currentItem.setData(newdata); } );
       }
     }
     QStylizedButton { /* remove */

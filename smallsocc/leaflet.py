@@ -1,7 +1,10 @@
+import logging
 from hardware import HWSOC
 from PyQt5.QtCore import pyqtProperty, pyqtSignal, pyqtSlot, Q_ENUMS, QObject
 from PyQt5.QtQml import qmlRegisterType, qmlAttachedPropertiesObject
 from PyQt5.QtQuick import QQuickItem
+
+logger = logging.getLogger(__name__)
 
 class LeafletAssemblyAttached(QObject):
     """ provides attached properties to Leaflet objects in context of LeafletAssembly """
@@ -10,7 +13,7 @@ class LeafletAssemblyAttached(QObject):
         QObject.__init__(self, parent)
         self._index = LeafletAssemblyAttached.next_available
         LeafletAssemblyAttached.next_available += 1
-        print(f'instantiating leaflet #{self._index} and attaching index property')
+        logger.debug(f'instantiating leaflet #{self._index} and attaching index property')
 
     @pyqtProperty(int, constant=True)
     def index(self):
@@ -20,7 +23,7 @@ class LeafletAssemblyAttached(QObject):
 # leaflet type to be registered with QML (must be sub-class of QObject)
 class Leaflet(QQuickItem):
     _min_ext = 0
-    _max_ext = 255
+    _max_ext = 800
     next_available = 0
 
     # QML accessible enum defs
@@ -75,18 +78,18 @@ class Leaflet(QQuickItem):
         self._extension = val
         self.onExtensionChanged.emit(val)
 
-    def publishToHW(self, val):
-        print('publishing to HW - leaflet #{:d} ext: {:d}'.format(self.index, val))
-        self._hwsoc.set_position(self.index, self.extension)
-        pass
+    #  def publishToHW(self, val):
+    #      logger.debug('publishing to HW - leaflet #{:d} ext: {:d}'.format(self.index, val))
+    #      self._hwsoc.set_position(self.index, self.extension)
+    #      pass
 
-    @pyqtSlot()
-    def enableHWLink(self):
-        self.onExtensionChanged.connect(self.publishToHW)
+    #  @pyqtSlot()
+    #  def enableHWLink(self):
+    #      self.onExtensionChanged.connect(self.publishToHW)
 
-    @pyqtSlot()
-    def disableHWLink(self):
-        self.onExtensionChanged.disconnect(self.publishToHW)
+    #  @pyqtSlot()
+    #  def disableHWLink(self):
+    #      self.onExtensionChanged.disconnect(self.publishToHW)
 
 # make Leaflet accessible to qml
 qmlRegisterType(Leaflet, 'com.soc.types.Leaflets', 1, 0, 'Leaflet')

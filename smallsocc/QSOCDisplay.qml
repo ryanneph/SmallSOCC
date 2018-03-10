@@ -47,7 +47,6 @@ ColumnLayout {
         id: leaflet_spinbox
         Layout.column: 1
         Layout.row: 0
-        objectName: "leaflet_spinbox"
         editable: true
         from: 0
         to: soc_display.nleaflets-1
@@ -61,7 +60,6 @@ ColumnLayout {
         id: ext_spinbox
         Layout.column: 1
         Layout.row: 1
-        objectName: "ext_spinbox"
         editable: true
         from: 0
         to: soc_display.max_extension
@@ -80,17 +78,18 @@ ColumnLayout {
         onClicked: {
           var extmap = soc_display.getExtension();
           if (qsequencelist.lvseq.currentItem == null) {
-            return;
-            //TODO: finish implementation here
             // if no item is selected, insert new item at end of model and save leaflet config to it
             SequenceListModel.insertRows()
-            qsequencelist.lvseq.currentIndex = SequenceListModel.rowCount()-1;
+            qsequencelist.lvseq.currentIndex = 0;
+
           }
-          if (!qsequencelist.lvseq.currentItem.setData( {'extension_list': extmap} )) {
-            console.warn("failed to save 'extension_list' to item "+qsequencelist.lvseq.currentIndex);
+          if (!SequenceListModel.setData(qsequencelist.lvseq.currentIndex, extmap, 'extension_list')) {
+            console.warn("failed to save 'extension_list' to item "+qsequencelist.lvseq.currentIndex+1);
             return;
           }
-          footer_status.text = 'Leaflet configuration saved to item #' + qsequencelist.lvseq.currentIndex;
+          // TODO: maybe we can update display here without publishing same extensions twice
+          updateSOCConfig();
+          footer_status.text = 'Leaflet configuration saved to item #' + qsequencelist.lvseq.currentIndex+1;
         }
       }
 

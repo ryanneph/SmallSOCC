@@ -4,7 +4,7 @@ import QtQuick.Layouts 1.3
 
 Pane {
   id: seqdelegate
-  height: 65
+  height: seqdelegate_content.height + 8
   padding: 0
   width: seq_list_border.availableWidth-lvseq.spacing*2 /* uniform look on all sides */
   anchors.horizontalCenter: parent.horizontalCenter
@@ -18,46 +18,14 @@ Pane {
   property color bgcolor:          "transparent"
   property color content_fgcolor:  "black"
   property color index_fgcolor:    "gray"
-  property bool  is_modified:      false
 
-  signal modified; // indicates data that hasn't been saved to file
-  signal saved;    // indicates that data has been saved to file
-
-  // get model which stores all items for attached view
-  function getModel() { return seqdelegate.ListView.view.model; }
-
-  // gets SequenceItem associated with this delegate
-  function getItem() {
-    // console.debug("getItem("+index+")");
-    return getModel().getItem(index);
-  }
-
-  // get/set data on SequenceItem associated with this delegate
-  function getData() {
-    return getItem().get();
-  }
-  function setData(datamap) {
-    var model = getModel();
-    if (getItem(index).set(datamap)) {
-      var modelindex = model.index(index, 0);
-      model.dataChanged(modelindex, modelindex); // redraw delegate
-      modified();
-    } else {
-      console.debug('failed to set data on item: '+index);
-      return false;
-    }
-    return true;
-  }
-
-  // visually indicate that this data is unsaved exists only in gui state
-  onModified: function() {
-    is_modified = true;
-  }
+  // // get model which stores all items for attached view
+  // function getModel() { return seqdelegate.ListView.view.model; }
 
   states: [
     State {
       name: "MODIFIED"
-      when: is_modified && !seqdelegate.ListView.isCurrentItem
+      when: is_unsaved && !seqdelegate.ListView.isCurrentItem
       PropertyChanges {
         target: seqdelegate
         content_fgcolor: "white"
@@ -67,7 +35,7 @@ Pane {
     },
     State {
       name: "SELECTED"
-      when: seqdelegate.ListView.isCurrentItem && !is_modified
+      when: seqdelegate.ListView.isCurrentItem && !is_unsaved
       PropertyChanges {
         target: seqdelegate
         content_fgcolor: "white"
@@ -77,7 +45,7 @@ Pane {
     },
     State {
       name: "MOD_SELECT"
-      when: seqdelegate.ListView.isCurrentItem && is_modified
+      when: seqdelegate.ListView.isCurrentItem && is_unsaved
       PropertyChanges {
         target: seqdelegate
         content_fgcolor: "white"
@@ -102,7 +70,7 @@ Pane {
         anchors.top: parent.top
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
-        text: index;
+        text: index+1
         color: index_fgcolor
         font.pointSize: 16
       }

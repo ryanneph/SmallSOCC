@@ -20,10 +20,10 @@ def date_created_getter(dt: datetime, fmt: str=datetimefmt, as_basic=False, *arg
 
 def date_created_setter(val: object):
     """ set datetime from obj or str """
-    if isinstance('datetime'):
+    if isinstance(val, datetime):
         return val
     try: return datetime.strptime(val, datetimefmt)
-    except: raise RuntimeError(f"string: \"{val}\" couldn't be mapped to a valid \"datetime\"")
+    except: raise RuntimeError('string: "{}" couldn\'t be mapped to a valid "datetime"'.format(val))
 
 def type_getter(e: SequenceItemType, as_basic=False, *args, **kwargs):
     if as_basic:
@@ -55,13 +55,14 @@ def type_setter(val: object):
 ## Defines all accessible members and their getters/setters
 ## All items in this dict will be automatically instantiated as valid Qt Roles for the data model
 ##   and will hence be accessible properties from QML
-_sequenceitem_public_members = {v.name: v for v in
-    [
-        NamedMember('extension_list', [0 for _ in range(8)]),
+_sequenceitem_public_members = {v.name: v for v in [
+        NamedMember('extension_list', [0]*8),
         NamedMember('rot_gantry_deg', 0),
         NamedMember('rot_couch_deg', 0),
         NamedMember('timecode_ms', 0),
         NamedMember('description', ''),
         NamedMember('date_created', value_initializer=lambda: datetime.now(), getter=date_created_getter, setter=date_created_setter),
         NamedMember('type', SequenceItemType.Auto, getter=type_getter, setter=type_setter),
+        # volatiles - runtime only properties
+        NamedMember('is_unsaved', 0, volatile=True),
     ] }

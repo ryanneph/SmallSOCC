@@ -30,12 +30,6 @@ LeafletAssembly {
         var ii = i;
         return function() { root.onLeafletReleased(ii); };
       }());
-
-      // leaflets[i].onExtensionChanged.connect( function() {
-      //   // function closure - otherwise i== .length always
-      //   var ii = i;
-      //   return function() { root.onExtensionChanged(ii); };
-      // }() );
     }
   }
 

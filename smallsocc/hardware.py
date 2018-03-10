@@ -1,11 +1,15 @@
 import os
+import logging
 from borg import Borg
 import serial
 from serial.tools import list_ports
 
+logger = logging.getLogger(__name__)
+
 class HWSOC(Borg):
     """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
     _shared_state = {}
+    MAGIC_BYTES = bytes([ 0xFF, 0xD7 ])
 
     def __init__(self, nleaflets=None, HID=None, BAUD=115200):
         """
@@ -29,7 +33,7 @@ class HWSOC(Borg):
         try: self._fserial.close()
         except: pass
         self._fserial = None
-        print('EMULATOR MODE ACTIVATED')
+        logger.warning('EMULATOR MODE ACTIVATED')
 
     @staticmethod
     def device_info(portinfo):
@@ -48,11 +52,11 @@ class HWSOC(Borg):
             match = list_ports.grep(self._USB_HID)
             try: portlist.append(next(match))
             except StopIteration:
-                print("Warning: no serial devices with deviceid=\"{!s}\" were found".format(self._USB_HID))
+                logger.warning("no serial devices with deviceid=\"{!s}\" were found".format(self._USB_HID))
 
         # try to match first available serial device
         if not portlist:
-            print("Discovering available serial devices...")
+            logger.info("Discovering available serial devices...")
             portlist = list_ports.comports()
             for p in list(portlist):
                 # TODO: this may be an imperfect check for a valid device
@@ -63,19 +67,17 @@ class HWSOC(Borg):
             PORT = p.device
             try:
                 self._fserial = serial.Serial(PORT, self._BAUD, timeout=0, writeTimeout=0)
-                print("Connected to serial device ({!s})".format(self.device_info(p)))
+                logger.info("Connected to serial device ({!s})".format(self.device_info(p)))
                 break
             except serial.serialutil.SerialException:
                 continue
 
         if self._fserial is None:
             if not portlist:
-                print("Warning: no serial devices were discovered")
+                logger.warning("no serial devices were discovered")
             else:
-                print("Warning: failed to open connection to any of the discovered serial devices:")
-                for p in portlist:
-                    print("  - " + self.device_info(p))
-                    #  print(p.device, p.name, p.description, p.hwid, p.vid, p.pid, p.serial_number, p.location, p.manufacturer, p.product, p.interface)
+                logger.warning("failed to open connection to any of the discovered serial devices: %s", *["\n  - {}".format(self.device_info(p)) for p in portlist])
+                    #  logger.debug(p.device, p.name, p.description, p.hwid, p.vid, p.pid, p.serial_number, p.location, p.manufacturer, p.product, p.interface)
             self._activate_emulator_mode()
         return
 
@@ -88,23 +90,25 @@ class HWSOC(Borg):
         self._nleaflets = val
 
     def set_position(self, idx, pos):
+        """send extension for a single leaflet"""
         if self.EMULATOR_MODE:
             return
         if idx >= self.nleaflets or idx < 0:
             raise IndexError('index specified is out of bounds')
-        self._fserial.write(bytes([ 0xFF, 0xD7, idx ]) + pos.to_bytes(2, byteorder='big', signed=False) )
+        self._fserial.write(self.MAGIC_BYTES + bytes([idx]) + pos.to_bytes(2, byteorder='big', signed=False) )
         self._fserial.reset_input_buffer()
 
     def set_all_positions(self, poslist):
+        """send all leaflet extensions in one bytestring"""
         if self.EMULATOR_MODE:
             return
         if len(poslist) > self.nleaflets or not poslist:
             raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
-        self._fserial.write(bytes([ 0xFF, 0xD7 ]) + b''.join([pos.to_bytes(2, byteorder='big', signed=False) for pos in poslist]))
+        self._fserial.write(self.MAGIC_BYTES + b''.join([pos.to_bytes(2, byteorder='big', signed=False) for pos in poslist]))
 
     def go_home(self):
-        for i in range(self.nleaflets):
-            self.set_position(i, 0)
+        """set to all open leaflets"""
+        self.set_all_positions([0]*self.nleaflets)
 
     def get_position(self, idx):
         raise NotImplementedError('Feedback mechanism not yet implemented in hardware')

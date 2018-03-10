@@ -22,18 +22,18 @@ ApplicationWindow {
   function updateSOCConfig() {
     if (qsequencelist.lvseq.currentIndex < 0 || SequenceListModel.rowCount() <= 0) {
       qsocdisplay.soc_display.reset();
-      return;
-    }
-    var map = {};
-    var extarray = SequenceListModel.getItem(qsequencelist.lvseq.currentIndex).get()['extension_list']
-    if (extarray != null) {
-      for (var i=0; i<extarray.length; ++i) {
-        map[i] = extarray[i];
+    } else {
+      var map = {};
+      var extarray = SequenceListModel.data(qsequencelist.lvseq.currentIndex, 'extension_list')
+      if (extarray != null) {
+        for (var i=0; i<extarray.length; ++i) {
+          map[i] = extarray[i];
+        }
+        qsocdisplay.soc_display.setExtension(map);
       }
-      qsocdisplay.soc_display.setExtension(map);
-      // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
-      qsocdisplay.soc_display.onLeafletReleased(-1)
     }
+    // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
+    qsocdisplay.soc_display.onLeafletReleased(-1)
   }
 
   // startup signal/slot connections
@@ -88,7 +88,7 @@ ApplicationWindow {
           text: "Load"
           Layout.alignment: Qt.AlignRight
           onClicked: {
-            var d = DynamicQML.createModalDialog(mainwindow, "QFileDialog.qml", {"intent": "load"});
+            var d = DynamicQML.createDynamicObject(mainwindow, "QFileDialog.qml", {"intent": "load"});
             d.open();
             d.onSubmitted.connect( function(obj) {
               if (SequenceListModel.readFromJson(obj.path)) {
@@ -106,7 +106,7 @@ ApplicationWindow {
           text: "Save"
           Layout.alignment: Qt.AlignRight
           onClicked:{
-            var d = DynamicQML.createModalDialog(mainwindow, "QFileDialog.qml", {"intent": "save"});
+            var d = DynamicQML.createDynamicObject(mainwindow, "QFileDialog.qml", {"intent": "save"});
             d.open();
             d.onSubmitted.connect( function(obj) {
               if (SequenceListModel.writeToJson(obj.path)) {

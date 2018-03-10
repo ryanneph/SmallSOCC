@@ -9,6 +9,8 @@ import os
 from os.path import dirname
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL) # allow ctrl-c kill
+import argparse
+import logging
 
 from OpenGL import GL
 from PyQt5 import QtCore
@@ -16,12 +18,15 @@ from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtQuick import QQuickItem
 
+import soclog
 from version import VERSION_FULL
 from hardware import HWSOC
 import leaflet
 import leafletassembly
 import sequence
 import pathhandler
+
+logger = logging.getLogger(__name__)
 
 # define paths
 PARENT = os.path.abspath(dirname(dirname(__file__)))
@@ -32,18 +37,24 @@ TEMP = os.path.join(PARENT, 'temp')
 def qt_message_handler(mode, context, message):
     if mode == QtCore.QtInfoMsg:
         mode = 'INFO'
+        loglevel = logging.INFO
     elif mode == QtCore.QtWarningMsg:
         mode = 'WARNING'
+        loglevel = logging.WARNING
     elif mode == QtCore.QtCriticalMsg:
         mode = 'CRITICAL'
+        loglevel = logging.ERROR
     elif mode == QtCore.QtFatalMsg:
         mode = 'FATAL'
+        loglevel = logging.ERROR
     else:
         mode = 'DEBUG'
+        loglevel = logging.DEBUG
 
     try:    base = os.path.basename(context.file)
     except: base = str(context.file)
-    print('qml- {!s}:L{!s} -{!s}:  {!s}'.format(base, context.line, mode, message))
+    logger = logging.getLogger('qml')
+    logger.log(loglevel, '%s:L%s -%s:  %s', base, context.line, mode, message)
 
 def preExit():
     """ occurs just before Qt application exits (bound to QGuiApplication.aboutToQuit() signal) """
@@ -54,12 +65,21 @@ def preExit():
 ####################################################################################################
 # Start GUI
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Frontend for interfacing with SOC hardware',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default=None, help='set the loglevel')
+    parser.add_argument('--logconf', type=str, default='logging.conf.json', help='path to log configuration')
+    args = parser.parse_args()
+
+    # initialize logger
+    soclog.init_logging(level=logging._nameToLevel.get(args.loglevel, None), config_path=args.logconf)
+
     # TODO: DEBUG
     # load example sequence, for rapid debugging
     try:
         samplelistmodel = sequence.SequenceListModel.fromJson(os.path.join(TEST_FILES, 'test_output.json'))
     except Exception as e:
-        print('FAILED TO READ DEBUG JSON FILE : {!s}'.format(e))
+        logger.warning('FAILED TO READ DEBUG JSON FILE : {!s}'.format(e))
         # SAMPLE ITEMS FOR DEBUG
         from sequence import SequenceItem, SequenceItemType
         sample_sequenceitems = [
