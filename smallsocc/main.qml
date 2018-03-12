@@ -18,6 +18,9 @@ ApplicationWindow {
   color: color_bgbase
   footer: QTimedText {id: "footer_status"; interval: 5000}
 
+  // global state variables
+  property bool isTreating: false
+
   // prompt a refresh of the SOC display using data from the currently selected SequenceItem
   // note: this will also prompt a change in HW positions to match display
   function updateSOCConfig() {

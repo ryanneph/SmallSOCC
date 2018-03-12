@@ -28,6 +28,17 @@ RowLayout {
       ScrollBar.vertical: ScrollBar {}
       cacheBuffer: 0
 
+      function next() {
+        if (currentIndex >= 0 && currentIndex < model.rowCount()-1) {
+          currentIndex += 1;
+        }
+      }
+      function previous() {
+        if (currentIndex >= 1 && currentIndex < model.rowCount()) {
+          currentIndex -= 1;
+        }
+      }
+
       model: SequenceListModel  // see main.py for contextvariable setting
       delegate: QSequenceDelegate {}
     }
@@ -109,6 +120,74 @@ RowLayout {
         if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex+1)) {
           lvseq.currentIndex = lvseq.currentIndex+1;
         }
+      }
+    }
+
+    Rectangle { /* spacer */
+      height: 15
+      width: root.btn_width
+      color: "transparent"
+    }
+    Label {
+      text: "Treatment"
+      Layout.fillWidth: true
+
+
+    }
+    Timer {
+      id: treatment_timer
+      interval: 1000
+      repeat: true
+      onRunningChanged: {
+        if (running == true) {
+          isTreating = true
+        } else {
+          isTreating = false
+        }
+      }
+      onTriggered: {
+        if (lvseq.currentIndex == -1 || lvseq.currentIndex >= (SequenceListModel.rowCount()-1)) {
+          stop()
+          if (running == false) {
+            footer_status.text = "Treatment concluded"
+          } else {
+            console.error("Error ending treatment")
+          }
+        } else {
+          console.debug('advancing to next leaflet configuration')
+          lvseq.next()
+        }
+      }
+    }
+    QStylizedButton { /* Start Treatment */
+      height: root.btn_height
+      width: root.btn_width
+      text: "Start"
+      font.pointSize: root.fontsize
+      onClicked: {
+        footer_status.text = "Started treatment";
+        treatment_timer.start()
+      }
+    }
+    QStylizedButton { /* Pause Treatment */
+      height: root.btn_height
+      width: root.btn_width
+      text: "Pause"
+      font.pointSize: root.fontsize
+      onClicked: {
+        footer_status.text = "Paused treatment";
+        treatment_timer.stop();
+      }
+    }
+    QStylizedButton { /* Reset Treatment */
+      height: root.btn_height
+      width: root.btn_width
+      text: "Reset"
+      font.pointSize: root.fontsize
+      onClicked: {
+        footer_status.text = "Reset treatment";
+        lvseq.currentIndex = 0;
+        treatment_timer.restart();
       }
     }
 

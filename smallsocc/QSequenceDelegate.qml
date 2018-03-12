@@ -25,13 +25,13 @@ Pane {
 
   states: [
     State {
-      name: "MODIFIED"
-      when: is_unsaved && !seqdelegate.ListView.isCurrentItem
+      name: "TREAT_SELECTED"
+      when: seqdelegate.ListView.isCurrentItem && isTreating
       PropertyChanges {
         target: seqdelegate
-        content_fgcolor: fgcolor_dark
-        index_fgcolor: fgcolor_dark
-        bgcolor: "#FCA87A"
+        content_fgcolor: fgcolor_light
+        index_fgcolor: fgcolor_light
+        bgcolor: "#11B84F"
       }
     },
     State {
@@ -42,6 +42,16 @@ Pane {
         content_fgcolor: fgcolor_light
         index_fgcolor: fgcolor_light
         bgcolor: "#3080ED"
+      }
+    },
+    State {
+      name: "MODIFIED"
+      when: is_unsaved && !seqdelegate.ListView.isCurrentItem
+      PropertyChanges {
+        target: seqdelegate
+        content_fgcolor: fgcolor_dark
+        index_fgcolor: fgcolor_dark
+        bgcolor: "#FCA87A"
       }
     },
     State {
