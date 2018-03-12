@@ -83,6 +83,7 @@ Leaflet {
     x: isHorizontal() && isPositive() ? -rect_stem.width : 0
     y: isVertical() && isPositive() ? -rect_stem.height : 0
     color: "transparent"
+    opacity: root.opacity_leaf
 
     Rectangle {
       id: rect_leaf
@@ -90,7 +91,6 @@ Leaflet {
       height: root.height
       border.color: Qt.darker(color, 1.25)
       color: color_leaf
-      opacity: root.opacity_leaf
       anchors.right: {
         if (isHorizontal() && isPositive()) {
           return compound.right
@@ -147,8 +147,8 @@ Leaflet {
       anchors.horizontalCenter: rect_leaf.horizontalCenter
       anchors.verticalCenter: rect_leaf.verticalCenter
       text: index
-      color: Qt.darker(rect_leaf.color, 1.05)
-      font.pointSize: 14
+      color: Qt.darker(rect_leaf.color, 1.1)
+      font.pointSize: 12
     }
   }
   MouseArea {
