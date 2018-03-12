@@ -62,10 +62,10 @@ class SequenceItem(QtCore.QObject):
                     if k not in self._members:
                         logger.error('"{!s}" is not a property of SequenceItem'.format(k))
                     else:
-                        logger.debug('setting self._members[{!s}] to {!s}'.format(k, kwargs[k]))
+                        logger.debug2('setting self._members[{!s}] to {!s}'.format(k, kwargs[k]))
                         self._members[k].value = kwargs[k]
                 except:
-                    logger.debug('failed to set SequenceItem property: {!s}'.format(k))
+                    logger.warning('failed to set SequenceItem property: {!s}'.format(k))
                     continue
 
     def __repr__(self):
@@ -86,7 +86,7 @@ class SequenceItem(QtCore.QObject):
         d = {}
         for k, v in self._members.items():
             if not v.volatile:
-                logger.debug('{} is a {} with val: {} and basicval: {}'.format(k, type(v.value), v.value, v.basicvalue))
+                logger.debug2('{} is a {} with val: {} and basicval: {}'.format(k, type(v.value), v.value, v.basicvalue))
                 d[k] = v.basicvalue
         return d
 
@@ -131,11 +131,11 @@ class SequenceItem(QtCore.QObject):
             val = val.toVariant()
 
         if val is not None:
-            logger.debug(f'setting new value for \"{key}\": {val}')
+            logger.debug2(f'setting new value for \"{key}\": {val}')
             self._members[key].value = val
         elif key is not None:
             for k, v in key.items():
-                logger.debug(f'setting new value for \"{k}\": {v}')
+                logger.debug2(f'setting new value for \"{k}\": {v}')
                 self._members[k].value = v
         else: return False
         self.setModified()
@@ -214,7 +214,6 @@ class SequenceListModel(QtCore.QAbstractListModel):
                 f.write(js)
 
             for idx, mem in enumerate(self._items):
-                logger.debug('setting member unsaved to false')
                 mem.setUnmodified()
                 self.redrawItemDelegate(idx)
 
@@ -269,7 +268,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if role == Qt.DisplayRole or role == Qt.EditRole:
             return self._items[index.row()].get()
         if Qt.UserRole <= role < Qt.UserRole+len(SequenceUserRoles.__members__):
-            logger.debug('accessing delegate data role: {}:{}'.format(role, rolename))
+            logger.debug2('accessing delegate data role: {}:{}'.format(role, rolename))
             sequenceitem = self._items[index.row()]
             val = sequenceitem._members[rolename].basicvalue
             return val
@@ -338,7 +337,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.beginMoveRows(QtCore.QModelIndex(), sourceRow, sourceRow+count-1, QtCore.QModelIndex(), destIndex)
         for i in range(count):
             self._items.insert(destinationChild, self._items.pop(sourceRow+i))
-            logger.debug('moving from {} to {}'.format(sourceRow, destinationChild))
+            logger.debug2('moving from {} to {}'.format(sourceRow, destinationChild))
         self.endMoveRows()
         return True
 
@@ -362,7 +361,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if isinstance(value, QtQml.QJSValue):
             value = value.toVariant()
 
-        logger.debug("setting data at row {} to {} using role {}: {}".format(index.row(), value, role, rolename))
+        logger.debug2("setting data at row {} to {} using role {}: {}".format(index.row(), value, role, rolename))
 
         if role == Qt.EditRole and isinstance(value, SequenceItem):
             self._items[index.row()] = value

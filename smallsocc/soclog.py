@@ -3,6 +3,15 @@ import logging
 import logging.config
 import json
 
+# custom logging levels
+logging.DEBUG2 = 9
+logging.addLevelName(logging.DEBUG2, "DEBUG2")
+def debug2(self, message, *args, **kws):
+    # Yes, logger takes its '*args' as 'args'.
+    if self.isEnabledFor(logging.DEBUG2):
+        self._log(logging.DEBUG2, message, args, **kws)
+logging.Logger.debug2 = debug2
+
 def init_logging(level=None, config_path='logging.conf.json'):
     """Setup logging configuration"""
     path = os.getenv('LOG_CFG', None)

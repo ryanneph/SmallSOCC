@@ -36,18 +36,22 @@ TEMP = os.path.join(PARENT, 'temp')
 # TODO: Add proper python logger and integrate with Qt Message Handler
 def qt_message_handler(mode, context, message):
     if mode == QtCore.QtInfoMsg:
+        # console.info()
         mode = 'INFO'
         loglevel = logging.INFO
     elif mode == QtCore.QtWarningMsg:
+        # console.warn();
         mode = 'WARNING'
         loglevel = logging.WARNING
     elif mode == QtCore.QtCriticalMsg:
-        mode = 'CRITICAL'
+        # console.error()
+        mode = 'ERROR'
         loglevel = logging.ERROR
     elif mode == QtCore.QtFatalMsg:
-        mode = 'FATAL'
+        mode = 'ERROR'
         loglevel = logging.ERROR
     else:
+        # console.debug()
         mode = 'DEBUG'
         loglevel = logging.DEBUG
 

@@ -14,13 +14,13 @@
   "handlers": {
     "console": {
       "class": "logging.StreamHandler",
-      "level": "DEBUG",
+      "level": 1,
       "formatter": "simple",
       "stream": "ext://sys.stdout"
     },
     "console-qml": {
       "class": "logging.StreamHandler",
-      "level": "DEBUG",
+      "level": 1,
       "formatter": "qml",
       "stream": "ext://sys.stdout"
     }
