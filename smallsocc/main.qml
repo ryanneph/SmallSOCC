@@ -76,6 +76,7 @@ ApplicationWindow {
         Layout.fillHeight: true
         Layout.minimumWidth: 250
         Layout.maximumWidth: 600
+        enabled: !isTreating
       }
       QSequenceList { /* ListView + Buttons */
         id: qsequencelist
@@ -88,6 +89,7 @@ ApplicationWindow {
       Layout.maximumHeight: 200
       Layout.minimumHeight: 75
       Layout.fillWidth: true
+      enabled: !isTreating
       background: QDebugBorder {}
 
       RowLayout {

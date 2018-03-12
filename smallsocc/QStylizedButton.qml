@@ -7,6 +7,7 @@ Button {
   property color bgcolor: "#ededed"
   property color bordercolor: "#555"
   property int borderwidth: 2
+  property bool bold: false
 
   background: Rectangle {
     border.color: !button.down ? bordercolor : Qt.darker(bordercolor, 1.2)
@@ -15,8 +16,8 @@ Button {
     opacity: enabled ? 1.0 : 0.3
   }
   font {
-    pointSize: 12;
-    bold: true
+    pointSize: 12
+    bold: button.bold
   }
   contentItem: Text {
     text: button.text

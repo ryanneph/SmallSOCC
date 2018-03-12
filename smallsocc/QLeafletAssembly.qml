@@ -86,7 +86,7 @@ LeafletAssembly {
     z: 99
     color: "transparent"
     border.color: "#000000"
-    border.width: 1
+    border.width: 2
   }
   Rectangle {
     id: background

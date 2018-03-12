@@ -15,7 +15,7 @@
       ],
       "rot_couch_deg":"5",
       "rot_gantry_deg":"0",
-      "timecode_ms":"0",
+      "timecode_ms":"100",
       "type":"Manual"
     },
     {
@@ -33,7 +33,7 @@
       ],
       "rot_couch_deg":"12",
       "rot_gantry_deg":"120",
-      "timecode_ms":"10000",
+      "timecode_ms":"200",
       "type":"Auto"
     },
     {
@@ -51,7 +51,7 @@
       ],
       "rot_couch_deg":"0",
       "rot_gantry_deg":"45",
-      "timecode_ms":"18000",
+      "timecode_ms":"100",
       "type":"Auto"
     },
     {
@@ -69,7 +69,7 @@
       ],
       "rot_couch_deg":"24",
       "rot_gantry_deg":"25",
-      "timecode_ms":"25500",
+      "timecode_ms":"255",
       "type":"Auto"
     }
   ],

@@ -69,9 +69,9 @@ Pane {
   RowLayout {
     anchors.fill: parent
     spacing: 10
-    Item { /* print index and time */
+    Item { /* print index and duration */
       Layout.preferredHeight: seqdelegate.height
-      Layout.preferredWidth: 45
+      Layout.preferredWidth: 55
       Layout.leftMargin: lvseq.spacing + parseInt(parent.spacing/2)
       Label { /* print index */
         id: seqdelegate_index_label

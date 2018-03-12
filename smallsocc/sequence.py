@@ -193,6 +193,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.beginResetModel()
         self._items = seqitems
         self.endResetModel();
+        self.sizeChanged.emit(self.rowCount())
         return True
 
     @pyqtSlot(str, result=bool)
@@ -234,6 +235,11 @@ class SequenceListModel(QtCore.QAbstractListModel):
 
     ## METHODS
     # Virtual Base Method
+    sizeChanged = pyqtSignal([int])
+    @pyqtProperty(int, notify=sizeChanged)
+    def size(self):
+        return self.rowCount()
+
     @pyqtSlot(result=int)
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self._items)
@@ -301,6 +307,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         for i in range(count):
             self._items.insert(row+i, SequenceItem(parent=self))
         self.endInsertRows()
+        self.sizeChanged.emit(self.rowCount())
         return True
 
     # Virtual Base Method
@@ -315,6 +322,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if self.rowCount() <=0:
             self.beginResetModel()
             self.endResetModel();
+        self.sizeChanged.emit(self.rowCount())
         return True
 
     # Virtual Base Method
