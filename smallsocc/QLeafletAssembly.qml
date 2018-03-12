@@ -5,8 +5,11 @@ import com.soc.types.Leaflets 1.0
 
 LeafletAssembly {
   id: root
-  property color color_bg: "#aaaaaa"
-  property color color_field: "#F0F6F8"
+  property color color_bg: "transparent"
+  property color color_field: "#FFFCC1"
+  property color color_leaf: "#e09947"
+  property color color_stem: "#222222"
+  property real  opacity_leaf: 0.85
   property bool draggable: false
   property bool preventCollisions: false
   readonly property int nleaflets: leaflets.length
@@ -82,8 +85,8 @@ LeafletAssembly {
     height: parent.height
     z: 99
     color: "transparent"
-    border.color: "black"
-    border.width: 2
+    border.color: "#000000"
+    border.width: 1
   }
   Rectangle {
     id: background
@@ -117,6 +120,9 @@ LeafletAssembly {
     draggable: root.draggable
     preventCollisions: root.preventCollisions
     compext: l5.extension
+    color_leaf: root.color_leaf
+    color_stem: root.color_stem
+    opacity_leaf: root.opacity_leaf
 
     startpos.x: (root.width/2) + (beambounds.width/2)
     startpos.y: (root.height/2) - (beambounds.height/2)
@@ -131,6 +137,9 @@ LeafletAssembly {
     draggable: root.draggable
     preventCollisions: root.preventCollisions
     compext: l4.extension
+    color_leaf: root.color_leaf
+    color_stem: root.color_stem
+    opacity_leaf: root.opacity_leaf
 
     startpos.x: (root.width/2) + (beambounds.width/2)
     startpos.y: (root.height/2)
@@ -145,6 +154,9 @@ LeafletAssembly {
     draggable: root.draggable
     preventCollisions: root.preventCollisions
     compext: l7.extension
+    color_leaf: root.color_leaf
+    color_stem: root.color_stem
+    opacity_leaf: root.opacity_leaf
 
     startpos.x: (root.width/2)
     startpos.y: (root.height/2) + (beambounds.height/2)
@@ -159,6 +171,9 @@ LeafletAssembly {
     draggable: root.draggable
     preventCollisions: root.preventCollisions
     compext: l6.extension
+    color_leaf: root.color_leaf
+    color_stem: root.color_stem
+    opacity_leaf: root.opacity_leaf
 
     startpos.x: (root.width/2) - (beambounds.width/2)
     startpos.y: (root.height/2) + (beambounds.height/2)
@@ -173,6 +188,9 @@ LeafletAssembly {
     draggable: root.draggable
     preventCollisions: root.preventCollisions
     compext: l1.extension
+    color_leaf: root.color_leaf
+    color_stem: root.color_stem
+    opacity_leaf: root.opacity_leaf
 
     startpos.x: (root.width/2) - (3*beambounds.width/2)
     startpos.y: (root.height/2)
@@ -187,6 +205,9 @@ LeafletAssembly {
     draggable: root.draggable
     preventCollisions: root.preventCollisions
     compext: l0.extension
+    color_leaf: root.color_leaf
+    color_stem: root.color_stem
+    opacity_leaf: root.opacity_leaf
 
     startpos.x: (root.width/2) - (3*beambounds.width/2)
     startpos.y: (root.height/2) - (beambounds.height/2)
@@ -201,6 +222,9 @@ LeafletAssembly {
     draggable: root.draggable
     preventCollisions: root.preventCollisions
     compext: l3.extension
+    color_leaf: root.color_leaf
+    color_stem: root.color_stem
+    opacity_leaf: root.opacity_leaf
 
     startpos.x: (root.width/2) - (beambounds.width/2)
     startpos.y: (root.height/2) - (3*beambounds.height/2)
@@ -215,6 +239,9 @@ LeafletAssembly {
     draggable: root.draggable
     preventCollisions: root.preventCollisions
     compext: l2.extension
+    color_leaf: root.color_leaf
+    color_stem: root.color_stem
+    opacity_leaf: root.opacity_leaf
 
     startpos.x: (root.width/2)
     startpos.y: (root.height/2) - (3*beambounds.height/2)

@@ -14,7 +14,8 @@ ApplicationWindow {
   minimumWidth: 850
   // maximumHeight: height
   // maximumWidth: width
-  color: "#EEE"
+  property color color_bgbase: "#F4F4F4"
+  color: color_bgbase
   footer: QTimedText {id: "footer_status"; interval: 5000}
 
   // prompt a refresh of the SOC display using data from the currently selected SequenceItem
@@ -59,14 +60,24 @@ ApplicationWindow {
     /* split into two horizontal control containers */
     id: controls_container
     anchors.fill: parent
-    anchors.margins: 20
+    anchors.margins: 10
     spacing: controls_container.anchors.margins
     RowLayout {
       id: upper_half
       spacing: controls_container.anchors.margins
+      Layout.fillWidth: true
 
-      QSOCDisplay { id: qsocdisplay }   /* QLeafletAssembly + controls */
-      QSequenceList { id: qsequencelist } /* ListView + Buttons */
+      QSOCDisplay { /* QLeafletAssembly + controls */
+        id: qsocdisplay
+        Layout.alignment: Qt.AlignTop
+        Layout.fillHeight: true
+        Layout.minimumWidth: 250
+        Layout.maximumWidth: 600
+      }
+      QSequenceList { /* ListView + Buttons */
+        id: qsequencelist
+        Layout.fillWidth: true
+      }
     }
 
     Pane { /* filedialog controls */

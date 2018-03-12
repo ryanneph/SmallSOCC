@@ -8,6 +8,6 @@ Item {
     // border.color: "red"
     border.color: "transparent"
     z: 99
-    color: "#EEE"
+    color: "transparent"
   }
 }

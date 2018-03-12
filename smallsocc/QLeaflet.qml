@@ -35,6 +35,9 @@ Leaflet {
   // Visual Properties
   property int direction: Leaflet.Positive
   property int orientation: Leaflet.Horizontal
+  property color color_leaf: "#e09947"
+  property color color_stem: "#222222"
+  property real  opacity_leaf: 0.85
 
   // reset x,y to start value
   function reset() { extension = 0; }
@@ -85,10 +88,9 @@ Leaflet {
       id: rect_leaf
       width: root.width
       height: root.height
-      border.color: Qt.darker(color, 1.4)
-      property color base_color: "#e09947"
-      color: base_color
-      opacity: 0.85
+      border.color: Qt.darker(color, 1.25)
+      color: color_leaf
+      opacity: root.opacity_leaf
       anchors.right: {
         if (isHorizontal() && isPositive()) {
           return compound.right
@@ -112,8 +114,8 @@ Leaflet {
     }
     Rectangle {
       id: rect_stem
-      color: "#222222"
-      border.color: Qt.darker(color, 1.8)
+      color: root.color_stem
+      border.color: Qt.darker(color, 1.4)
       property var factor: 0.2;
       width: isHorizontal() ? (rect_leaf.width) : (factor*rect_leaf.width)
       height: isHorizontal() ? (factor*rect_leaf.height) : (rect_leaf.height)
@@ -178,7 +180,7 @@ Leaflet {
     }
 
     onPressed: {
-      rect_leaf.color = "#f1aa50"
+      rect_leaf.color = Qt.darker(root.color_leaf, 1.1)
       // console.log("index:     " + index);
       // console.log("drag.minX: " + drag.minimumX);
       // console.log("drag.maxX: " + drag.maximumX);
@@ -187,7 +189,7 @@ Leaflet {
       // console.log("comp:      " + root.collide);
     }
     onReleased: {
-      rect_leaf.color = rect_leaf.base_color
+      rect_leaf.color = root.color_leaf
       // keep from firing a loop of x/y change -> extChange -> repeat...
       enableextsignal = false;
       extension = extfromxy();

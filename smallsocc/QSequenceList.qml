@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.3
 import "dynamicqml.js" as DynamicQML
 
 RowLayout {
+  id: root
   property alias lvseq: lvseq
 
   Pane { /* Sequence List */
@@ -15,7 +16,7 @@ RowLayout {
     Layout.minimumWidth: 270
     property int borderwidth: 2
     padding: borderwidth
-    background: Rectangle { anchors.fill: parent; border.color: "black"; border.width: parent.borderwidth; color: "#eee" }
+    background: Rectangle { anchors.fill: parent; border.color: "black"; border.width: parent.borderwidth; color: "transparent" }
 
     ListView {
       id: lvseq
@@ -25,6 +26,7 @@ RowLayout {
       focus: true
       anchors.fill: parent
       ScrollBar.vertical: ScrollBar {}
+      cacheBuffer: 0
 
       model: SequenceListModel  // see main.py for contextvariable setting
       delegate: QSequenceDelegate {}
@@ -32,22 +34,23 @@ RowLayout {
   }
 
 
-
   /* user props */
-  property int btn_width: 45
+  property int btn_width: 90
   property int btn_height: 45
-  ColumnLayout {
+  property int fontsize: 12
+  Column {
     id: list_buttons
     clip: true
     spacing: -1*children[0].borderwidth
-    width: btn_width
+    Layout.minimumWidth: root.btn_width
+    Layout.maximumWidth: root.btn_width
     Layout.alignment: Qt.AlignTop
 
     QStylizedButton { /* move up */
-      Layout.preferredHeight: btn_height
-      Layout.fillWidth: true
+      height: root.btn_height
+      width: root.btn_width
       text: "\u25B2"
-      font.pointSize: 12
+      font.pointSize: root.fontsize
       onClicked: {
         if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex-1)) {
           lvseq.currentIndex -= 1;
@@ -55,8 +58,8 @@ RowLayout {
       }
     }
     QStylizedButton { /* insert after */
-      Layout.preferredHeight: btn_height
-      Layout.fillWidth: true
+      height: root.btn_height
+      width: root.btn_width
       text: "+"
       font.pointSize: 16
       textcolor: "#007B08"
@@ -69,8 +72,8 @@ RowLayout {
       }
     }
     QStylizedButton { /* Edit Item Data */
-      Layout.preferredHeight: btn_height
-      Layout.fillWidth: true
+      height: root.btn_height
+      width: root.btn_width
       text: "Edit"
       onClicked: {
         if (!lvseq.currentItem) { console.debug('current item is null'); return null; }
@@ -88,20 +91,20 @@ RowLayout {
       }
     }
     QStylizedButton { /* remove */
-      Layout.preferredHeight: btn_height
-      Layout.fillWidth: true
+      height: root.btn_height
+      width: root.btn_width
       text: "X"
-      font.pointSize: 12
+      font.pointSize: root.fontsize
       textcolor: "#FF5151"
       onClicked: {
         SequenceListModel.removeRows(lvseq.currentIndex, 1)
       }
     }
     QStylizedButton { /* move down */
-      Layout.preferredHeight: btn_height
-      Layout.fillWidth: true
+      height: root.btn_height
+      width: root.btn_width
       text: "\u25BC"
-      font.pointSize: 12
+      font.pointSize: root.fontsize
       onClicked: {
         if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex+1)) {
           lvseq.currentIndex = lvseq.currentIndex+1;

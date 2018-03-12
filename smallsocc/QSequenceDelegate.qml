@@ -9,18 +9,19 @@ Pane {
   width: seq_list_border.availableWidth-lvseq.spacing*2 /* uniform look on all sides */
   anchors.horizontalCenter: parent.horizontalCenter
   background: Rectangle {
-    anchors.fill: parent; border.color: "#bbb"; radius: 5
+    anchors.fill: parent;
+    border.color: seqdelegate.state=="" ? "#B8B8B8"  : Qt.darker(seqdelegate.bgcolor, 1.6);
+    radius: 5
     color: seqdelegate.bgcolor
   }
   state: ""
 
   /* user props */
+  property color fgcolor_light: "#FFFFFF"
+  property color fgcolor_dark: "#111111"
   property color bgcolor:          "transparent"
-  property color content_fgcolor:  "black"
-  property color index_fgcolor:    "gray"
-
-  // // get model which stores all items for attached view
-  // function getModel() { return seqdelegate.ListView.view.model; }
+  property color content_fgcolor:  fgcolor_dark
+  property color index_fgcolor:    fgcolor_dark
 
   states: [
     State {
@@ -28,9 +29,9 @@ Pane {
       when: is_unsaved && !seqdelegate.ListView.isCurrentItem
       PropertyChanges {
         target: seqdelegate
-        content_fgcolor: "white"
-        index_fgcolor: "#d9d9d9"
-        bgcolor: "#a56000"
+        content_fgcolor: fgcolor_dark
+        index_fgcolor: fgcolor_dark
+        bgcolor: "#FCA87A"
       }
     },
     State {
@@ -38,9 +39,9 @@ Pane {
       when: seqdelegate.ListView.isCurrentItem && !is_unsaved
       PropertyChanges {
         target: seqdelegate
-        content_fgcolor: "white"
-        index_fgcolor: "#d9d9d9"
-        bgcolor: "steelblue"
+        content_fgcolor: fgcolor_light
+        index_fgcolor: fgcolor_light
+        bgcolor: "#3080ED"
       }
     },
     State {
@@ -48,9 +49,9 @@ Pane {
       when: seqdelegate.ListView.isCurrentItem && is_unsaved
       PropertyChanges {
         target: seqdelegate
-        content_fgcolor: "white"
-        index_fgcolor: "#d9d9d9"
-        bgcolor: "#c99000"
+        content_fgcolor: fgcolor_light
+        index_fgcolor: fgcolor_light
+        bgcolor: "#DD4D00"
       }
     }
   ]
