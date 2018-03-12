@@ -94,7 +94,7 @@ Pane {
         anchors.bottom: parent.bottom
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
-        text: Number(timecode_ms/1000).toFixed(2)
+        text: Number(timecode_ms).toFixed(0) + ' ms'
         color: index_fgcolor
         font.pointSize: 9
       }

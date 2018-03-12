@@ -49,16 +49,16 @@ Dialog {
       Layout.fillWidth: true
       validator: IntValidator {bottom: -360; top: 360}
     }
-    Label { text: "Description" }
-    TextField {
-      id: text_desc
-      Layout.fillWidth: true
-    }
-    Label { text: "Timecode (ms)" }
+    Label { text: "Duration (ms): " }
     TextField {
       id: text_timecode
       Layout.fillWidth: true
       validator: DoubleValidator {bottom: 0}
+    }
+    Label { text: "Description: " }
+    TextField {
+      id: text_desc
+      Layout.fillWidth: true
     }
   }
 }
