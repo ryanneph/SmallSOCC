@@ -154,7 +154,7 @@ RowLayout {
       }
       Timer {
         id: treatment_timer
-        interval: 1000
+        interval: 100
         repeat: true
         onRunningChanged: {
           if (running == true) {

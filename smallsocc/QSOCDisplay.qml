@@ -11,7 +11,8 @@ ColumnLayout {
     Layout.fillWidth: true /* dynamically size */
     Layout.preferredHeight: width /* keep square */
     draggable: true
-    preventCollisions: false
+    preventCollisions: true
+    collision_buffer: 0 /* set spacing between companion leaflets to prevent hw issues */
     color_bg:    "transparent"
     color_field: "#FFFCC1"
     color_leaf:  "#7B7B7B"
@@ -61,7 +62,7 @@ ColumnLayout {
         Layout.row: 1
         editable: true
         from: 0
-        to: soc_display.max_extension
+        to: soc_display.leaflets[leaflet_spinbox.value].max_safe_extension
         value: soc_display.leaflets[leaflet_spinbox.value].extension
         onValueModified: {
           soc_display.setExtension(leaflet_spinbox.value, value)
@@ -72,8 +73,7 @@ ColumnLayout {
       Button { /* Save SequenceItem to ListModel */
         Layout.row: 2
         Layout.fillWidth: true
-        Layout.columnSpan: 2
-        text: "Save Sequence Item"
+        text: "Save Leaflet Configuration"
         onClicked: {
           var extmap = soc_display.getExtension();
           if (qsequencelist.lvseq.currentItem == null) {
@@ -86,9 +86,18 @@ ColumnLayout {
             console.warn("failed to save 'extension_list' to item " + (parseInt(qsequencelist.lvseq.currentIndex, 10)+1));
             return;
           }
-          // TODO: maybe we can update display here without publishing same extensions twice
-          updateSOCConfig();
+          updateSOCConfig(false);
           footer_status.text = 'Leaflet configuration saved to item #' + (parseInt(qsequencelist.lvseq.currentIndex, 10)+1);
+        }
+      }
+      Button { /* Reset SequenceItem */
+        Layout.row: 2
+        Layout.column: 1
+        Layout.fillWidth: true
+        text: "Reset Leaflet Configuration"
+        onClicked: {
+          updateSOCConfig();
+          footer_status.text = 'Leaflet configuration reset';
         }
       }
 

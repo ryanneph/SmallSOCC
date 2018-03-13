@@ -10,8 +10,9 @@ LeafletAssembly {
   property color color_leaf: "#e09947"
   property color color_stem: "#222222"
   property real  opacity_leaf: 0.85
-  property bool draggable: false
+  property bool draggable: true
   property bool preventCollisions: false
+  property int  collision_buffer: 0
   readonly property int nleaflets: leaflets.length
   property alias max_extension: l0.max_extension
   clip: true
@@ -119,7 +120,7 @@ LeafletAssembly {
     full_range: beambounds.width
     draggable: root.draggable
     preventCollisions: root.preventCollisions
-    compext: l5.extension
+    compext: (l5.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
     opacity_leaf: root.opacity_leaf
@@ -136,7 +137,7 @@ LeafletAssembly {
     full_range: beambounds.width
     draggable: root.draggable
     preventCollisions: root.preventCollisions
-    compext: l4.extension
+    compext: (l4.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
     opacity_leaf: root.opacity_leaf
@@ -153,7 +154,7 @@ LeafletAssembly {
     full_range: beambounds.height
     draggable: root.draggable
     preventCollisions: root.preventCollisions
-    compext: l7.extension
+    compext: (l7.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
     opacity_leaf: root.opacity_leaf
@@ -170,7 +171,7 @@ LeafletAssembly {
     full_range: beambounds.height
     draggable: root.draggable
     preventCollisions: root.preventCollisions
-    compext: l6.extension
+    compext: (l6.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
     opacity_leaf: root.opacity_leaf
@@ -187,7 +188,7 @@ LeafletAssembly {
     full_range: beambounds.width
     draggable: root.draggable
     preventCollisions: root.preventCollisions
-    compext: l1.extension
+    compext: (l1.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
     opacity_leaf: root.opacity_leaf
@@ -204,7 +205,7 @@ LeafletAssembly {
     full_range: beambounds.width
     draggable: root.draggable
     preventCollisions: root.preventCollisions
-    compext: l0.extension
+    compext: (l0.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
     opacity_leaf: root.opacity_leaf
@@ -221,7 +222,7 @@ LeafletAssembly {
     full_range: beambounds.height
     draggable: root.draggable
     preventCollisions: root.preventCollisions
-    compext: l3.extension
+    compext: (l3.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
     opacity_leaf: root.opacity_leaf
@@ -238,7 +239,7 @@ LeafletAssembly {
     full_range: beambounds.height
     draggable: root.draggable
     preventCollisions: root.preventCollisions
-    compext: l2.extension
+    compext: (l2.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
     opacity_leaf: root.opacity_leaf

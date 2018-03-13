@@ -23,7 +23,8 @@ ApplicationWindow {
 
   // prompt a refresh of the SOC display using data from the currently selected SequenceItem
   // note: this will also prompt a change in HW positions to match display
-  function updateSOCConfig() {
+  function updateSOCConfig(publishtohw) {
+    if (publishtohw === undefined) { publishtohw = true; }
     if (qsequencelist.lvseq.currentIndex < 0 || SequenceListModel.rowCount() <= 0) {
       qsocdisplay.soc_display.reset();
     } else {
@@ -37,7 +38,9 @@ ApplicationWindow {
       }
     }
     // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
-    qsocdisplay.soc_display.onLeafletReleased(-1)
+    if (publishtohw) {
+      qsocdisplay.soc_display.onLeafletReleased(-1)
+    }
   }
 
   // startup signal/slot connections

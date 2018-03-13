@@ -10,13 +10,19 @@ Leaflet {
   function isNegative()   { return !isPositive(); }
   property var dir: isPositive() ? 1 : -1
   property point startpos
-  property int   full_range
-  property int   compext
+  property int   full_range // full range of motion in pixels
+  property int   compext // complementary leaflet's current extension
   property bool  draggable: false
-  property bool  preventCollisions: true
-  property int   collide: {
-    if (preventCollisions) { compext; }
+  property bool  preventCollisions: false
+  // mapping of max_safe_extension to pixels from startpos
+  property int   collidepos: {
+    if (preventCollisions) { compext/max_extension*full_range; }
     else { 0; }
+  }
+  // max extension given that compext is set and collisions are avoided
+  property int max_safe_extension: {
+    if (preventCollisions) { max_extension - compext; }
+    else { max_extension; }
   }
 
   x: startpos.x
@@ -160,33 +166,27 @@ Leaflet {
 
     drag.minimumX: {
       if (isHorizontal()) {
-        isPositive() ? parent.startpos.x : parent.startpos.x - (parent.full_range-root.collide)
+        isPositive() ? parent.startpos.x : parent.startpos.x - (parent.full_range-root.collidepos)
       } else { 0 }
     }
     drag.maximumX: {
       if (isHorizontal()) {
-        isPositive() ? parent.startpos.x + (root.full_range-root.collide) : parent.startpos.x
+        isPositive() ? parent.startpos.x + (root.full_range-root.collidepos) : parent.startpos.x
       } else { 0 }
     }
     drag.minimumY: {
       if (isVertical()) {
-        isPositive() ? parent.startpos.y : parent.startpos.y - (full_range-root.collide)
+        isPositive() ? parent.startpos.y : parent.startpos.y - (full_range-root.collidepos)
       } else { 0 }
     }
     drag.maximumY: {
       if (isVertical()) {
-        isPositive() ? parent.startpos.y + (full_range-root.collide) : parent.startpos.y
+        isPositive() ? parent.startpos.y + (full_range-root.collidepos) : parent.startpos.y
       } else { 0 }
     }
 
     onPressed: {
       rect_leaf.color = Qt.darker(root.color_leaf, 1.1)
-      // console.log("index:     " + index);
-      // console.log("drag.minX: " + drag.minimumX);
-      // console.log("drag.maxX: " + drag.maximumX);
-      // console.log("drag.minY: " + drag.minimumY);
-      // console.log("drag.maxX: " + drag.maximumY);
-      // console.log("comp:      " + root.collide);
     }
     onReleased: {
       rect_leaf.color = root.color_leaf
