@@ -14,7 +14,7 @@ class PathHandler(QObject):
         """take a QURL and clean it up as an OS-specific path"""
         path = p
         if sys.platform == 'win32':
-            path = str.lstrip('/')
+            path = path.lstrip('/')
         else:
             if path[0] != '/':
                 path = '/' + path

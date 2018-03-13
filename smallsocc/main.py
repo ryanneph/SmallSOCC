@@ -52,8 +52,12 @@ def qt_message_handler(mode, context, message):
         loglevel = logging.ERROR
     else:
         # console.debug()
-        mode = 'DEBUG'
-        loglevel = logging.DEBUG
+        if message[:2] == "2:":
+            mode = 'DEBUG2'
+            loglevel = logging.DEBUG2
+        else:
+            mode = 'DEBUG'
+            loglevel = logging.DEBUG
 
     try:    base = os.path.basename(context.file)
     except: base = str(context.file)
