@@ -36,7 +36,7 @@ def type_setter(val: object):
         return val
     try:
         return SequenceItemType[str(val)]
-    except: raise RuntimeError(f"string: \"{val}\" couldn't be mapped to a valid \"SequenceItemType\"")
+    except: raise RuntimeError('string: "{}" couldn\'t be mapped to a valid "SequenceItemType"'.format(val))
 
 #  def deg_to_rad(deg: float) -> float:
 #      return math.pi * deg / 180

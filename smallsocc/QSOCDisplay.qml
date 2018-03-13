@@ -82,7 +82,8 @@ ColumnLayout {
             qsequencelist.lvseq.currentIndex = 0;
 
           }
-          if (!SequenceListModel.setData(qsequencelist.lvseq.currentIndex, extmap, 'extension_list')) {
+          var _data = {'extension_list': extmap, 'type': 'Manual'}
+          if (!SequenceListModel.setData(qsequencelist.lvseq.currentIndex, _data)) {
             console.warn("failed to save 'extension_list' to item " + (parseInt(qsequencelist.lvseq.currentIndex, 10)+1));
             return;
           }

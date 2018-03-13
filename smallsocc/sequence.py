@@ -305,7 +305,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
             row = self.rowCount()
         self.beginInsertRows(parent, row, row+count-1)
         for i in range(count):
-            self._items.insert(row+i, SequenceItem(parent=self))
+            self._items.insert(row+i, SequenceItem(parent=self, type=SequenceItemType.Manual))
         self.endInsertRows()
         self.sizeChanged.emit(self.rowCount())
         return True
