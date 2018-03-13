@@ -108,6 +108,7 @@ if __name__ == '__main__':
 
     # set QML visual style
     app = QGuiApplication(sys.argv + ['-style', 'default'])
+    #  app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     # register pre-exit hook
     app.aboutToQuit.connect(preExit) # perform cleanup
 
@@ -115,21 +116,43 @@ if __name__ == '__main__':
     engine = QQmlApplicationEngine()
     rootContext = engine.rootContext()
 
+    ## compute scaling ratios to make views dpi-independent
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        screens = app.screens()
+        for sidx, screen in enumerate(screens):
+            geometry = screen.geometry()
+            dpi = screen.logicalDotsPerInch()
+            logger.debug('Screen #{} ({}) - size: (w:{}, h:{}); DPI: {}'.format(sidx,  screen.name(), geometry.width(), geometry.height(), dpi))
+    screen = app.primaryScreen()
+    geometry = screen.geometry()
+    dpi = screen.logicalDotsPerInch()
+
+    refDpi    = 96
+    refHeight = 1440
+    refWidth  = 2560
+    _h = min(geometry.width(), geometry.height())
+    _w = max(geometry.width(), geometry.height())
+    sratio = min(_h/refHeight, _w/refWidth) # element size scaling
+    fratio = min(_h*refDpi/(dpi*refHeight), _w*refDpi/(dpi*refWidth)) # font pointSize scaling
+    logger.debug('Setting scaling ratios - general: {}; font: {}'.format(sratio, fratio))
+
     ## Set accessible properties/objects in QML Root Context
     rootContext.setContextProperty("mainwindow_title", 'SOC Controller - v{!s}(alpha)'.format(VERSION_FULL))
     # make seq. list model accessible to qml-listview
     rootContext.setContextProperty("SequenceListModel", samplelistmodel)
     pathhandler_instance = pathhandler.PathHandler()
     rootContext.setContextProperty("PathHandler", pathhandler_instance)
+    rootContext.setContextProperty("sratio", sratio)
+    rootContext.setContextProperty("fratio", fratio)
 
     # load layout
     engine.load(QtCore.QUrl(os.path.join(dirname(__file__), 'main.qml')))
-    rootObject = engine.rootObjects()[0]
 
     ## connect signals to slots - unnecessary, example of grabbing qml objects from py-code
     # listview buttons
+    #  rootObject = engine.rootObjects()[0]
     #  btns = rootObject.findChildren(QQuickItem, "list_buttons", QtCore.Qt.FindChildrenRecursively)[0]
     #  btns.findChild(QQuickItem, 'btn_moveup').clicked.connect(lambda: print('moveup clicked'))
 
-    # block until window is closed - event handler
+    # block until window is closed - event handler loop
     sys.exit(app.exec_())
