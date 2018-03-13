@@ -154,11 +154,11 @@ RowLayout {
       }
       Timer {
         id: treatment_timer
-        interval: 100
         repeat: true
         onRunningChanged: {
           if (running == true) {
             isTreating = true
+            interval = SequenceListModel.data(lvseq.currentIndex, 'timecode_ms');
           } else {
             isTreating = false
           }
@@ -172,8 +172,11 @@ RowLayout {
               console.error("Error ending treatment")
             }
           } else {
-            console.debug('advancing to next leaflet configuration')
+            // console.debug('advancing to next leaflet configuration')
             lvseq.next()
+            var duration = SequenceListModel.data(lvseq.currentIndex, 'timecode_ms')
+            // console.debug('beam-on duration is ' + duration + ' ms');
+            interval = duration;
           }
         }
       }
