@@ -8,10 +8,10 @@ ApplicationWindow {
   visible: true
   title: mainwindow_title // global property injection
   id: mainwindow
-  width: 1000
-  height: 800
-  minimumHeight: 700
-  minimumWidth: 850
+  width: 1000*sratio
+  height: 800*sratio
+  minimumHeight: 700*sratio
+  minimumWidth: 850*sratio
   // maximumHeight: height
   // maximumWidth: width
   property color color_bgbase: "#F4F4F4"
@@ -77,8 +77,8 @@ ApplicationWindow {
         id: qsocdisplay
         Layout.alignment: Qt.AlignTop
         Layout.fillHeight: true
-        Layout.minimumWidth: 250
-        Layout.maximumWidth: 600
+        Layout.minimumWidth: 250*sratio
+        Layout.maximumWidth: 600*sratio
         enabled: !isTreating
       }
       QSequenceList { /* ListView + Buttons */
@@ -89,8 +89,8 @@ ApplicationWindow {
 
     Pane { /* filedialog controls */
       id: bottom_frame
-      Layout.maximumHeight: 200
-      Layout.minimumHeight: 75
+      Layout.maximumHeight: 200*sratio
+      Layout.minimumHeight: 75*sratio
       Layout.fillWidth: true
       enabled: !isTreating
       background: QDebugBorder {}

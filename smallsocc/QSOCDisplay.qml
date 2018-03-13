@@ -14,7 +14,7 @@ ColumnLayout {
     preventCollisions: true
     collision_buffer: 0 /* set spacing between companion leaflets to prevent hw issues */
     color_bg:    "transparent"
-    color_field: "#FFFCC1"
+    color_field: "#FFFEE5"
     color_leaf:  "#7B7B7B"
     color_stem:  "#000000"
     opacity_leaf: 0.90
@@ -33,13 +33,13 @@ ColumnLayout {
 
       Label {
         text: "Leaflet:"
-        font.pixelSize: 16
+        font.pointSize: 12*fratio
         Layout.column: 0
         Layout.row: 0
       }
       Label {
         text: "Extension:"
-        font.pixelSize: 16
+        font.pointSize: 12*fratio
         Layout.column: 0
         Layout.row: 1
       }

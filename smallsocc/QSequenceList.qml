@@ -13,7 +13,7 @@ RowLayout {
     clip: true
     Layout.fillHeight: true
     Layout.fillWidth: true
-    Layout.minimumWidth: 270
+    Layout.minimumWidth: 270*sratio
     property int borderwidth: 2
     padding: borderwidth
     background: Rectangle { anchors.fill: parent; border.color: "black"; border.width: parent.borderwidth; color: "transparent" }
@@ -47,9 +47,9 @@ RowLayout {
 
 
   /* user props */
-  property int btn_width: 93
-  property int btn_height: 35
-  property int fontsize: 12
+  property int btn_width: 93*sratio
+  property int btn_height: 35*sratio
+  property int fontsize: 12*fratio
   ColumnLayout {
     id: list_buttons
     Layout.minimumWidth: root.btn_width
@@ -79,7 +79,7 @@ RowLayout {
         Layout.preferredHeight: root.btn_height
         Layout.fillWidth: true
         text: "+"
-        font.pointSize: 16
+        font.pointSize: root.fontsize + 4*fratio
         textcolor: "#007B08"
         onClicked: {
           if (lvseq.currentIndex < 0) { SequenceListModel.insertRows() }
@@ -248,9 +248,11 @@ RowLayout {
         color: "transparent"
       }
       Label {
+        // TODO: FINISH
         id: treat_time_elapsed
         text: "00:00"
-        font.pointSize: root.fontsize + 8
+        visible: false
+        font.pointSize: root.fontsize + 8*fratio
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
       }

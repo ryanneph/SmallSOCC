@@ -71,7 +71,7 @@ Pane {
     spacing: 10
     Item { /* print index and duration */
       Layout.preferredHeight: seqdelegate.height
-      Layout.preferredWidth: 55
+      Layout.preferredWidth: 55*sratio
       Layout.leftMargin: lvseq.spacing + parseInt(parent.spacing/2)
       Label { /* print index */
         id: seqdelegate_index_label
@@ -83,7 +83,7 @@ Pane {
         horizontalAlignment: Text.AlignHCenter
         text: index+1
         color: index_fgcolor
-        font.pointSize: 16
+        font.pointSize: 16*fratio
       }
       Label { /* print timecode */
         id: seqdelegate_timecode_label
@@ -96,7 +96,7 @@ Pane {
         horizontalAlignment: Text.AlignHCenter
         text: Number(timecode_ms).toFixed(0) + ' ms'
         color: index_fgcolor
-        font.pointSize: 9
+        font.pointSize: 9*fratio
       }
     }
     Column { /* print content */
