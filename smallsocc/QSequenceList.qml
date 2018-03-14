@@ -105,7 +105,10 @@ RowLayout {
             "description":    itemdata.description,
             "timecode_ms":    itemdata.timecode_ms,
           };
-          d.onSubmitted.connect( function(newdata) { SequenceListModel.setData(lvseq.currentIndex, newdata); } );
+          d.onSubmitted.connect( function(newdata) {
+            SequenceListModel.setData(lvseq.currentIndex, newdata);
+            d.destroy();
+          });
           d.open();
         }
       }
@@ -130,6 +133,32 @@ RowLayout {
           if (SequenceListModel.moveRows(lvseq.currentIndex, 1, lvseq.currentIndex+1)) {
             lvseq.currentIndex = lvseq.currentIndex+1;
           }
+        }
+      }
+      Rectangle { /* spacer */
+        Layout.preferredHeight: 10
+        Layout.fillWidth: true
+        color: "transparent"
+      }
+      QStylizedButton { /* clear list */
+        enabled: !isTreating
+        Layout.preferredHeight: root.btn_height
+        Layout.fillWidth: true
+        text: "Clear"
+        font.pointSize: root.fontsize
+        onClicked: {
+          var d = DynamicQML.createDynamicObject(mainwindow, "QMessageDialog.qml", {
+            'title': 'Clear All Leaflet Configurations?',
+            'text': "Are you sure you want to clear all leaflet configurations from the list?",
+            'standardButtons': 4195328 /* StandardButton.Ok | StandardButton.Cancel */
+          })
+          d.onAccepted.connect( function() {
+            SequenceListModel.clear()
+            footer_status.text = "Cleared all leaflet configurations"
+            d.destroy(); /* cleanup */
+          });
+          d.onRejected.connect( function() { d.destroy(); /* cleanup */ });
+          d.open()
         }
       }
     }

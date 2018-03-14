@@ -67,6 +67,7 @@ ApplicationWindow {
     id: controls_container
     anchors.fill: parent
     anchors.margins: 10
+    anchors.bottomMargin: 0
     spacing: controls_container.anchors.margins
     RowLayout {
       id: upper_half
@@ -90,35 +91,35 @@ ApplicationWindow {
     Pane { /* filedialog controls */
       id: bottom_frame
       Layout.maximumHeight: 200*sratio
-      Layout.minimumHeight: 75*sratio
+      Layout.minimumHeight: 40*sratio
       Layout.fillWidth: true
       enabled: !isTreating
       background: QDebugBorder {}
 
       RowLayout {
         anchors.fill: parent
+
         TextInput {
           id: field_json_path
           Layout.fillWidth: true
           readOnly: true
-          text: "json_path"
+          text: "Load a treatment plan..."
         }
         Button { /* Load JSON */
           text: "Load"
           Layout.alignment: Qt.AlignRight
           onClicked: {
             var d = DynamicQML.createDynamicObject(mainwindow, "QFileDialog.qml", {"intent": "load"});
-            d.open();
-            d.onSubmitted.connect( function(obj) {
-              if (SequenceListModel.readFromJson(obj.path)) {
-                field_json_path.text = obj.path;
-                var msg = "Sequence list loaded from \""+obj.path+"\"";
-                console.debug(msg);
+            d.onAccepted.connect( function() {
+              if (SequenceListModel.readFromJson(d.path)) {
+                field_json_path.text = d.path;
+                var msg = "Sequence list loaded from \""+d.path+"\"";
                 footer_status.text = msg;
-                field_json_path.text = obj.path;
+                field_json_path.text = d.path;
               }
-              obj.destroy(); /* cleanup */
+              d.destroy(); /* cleanup */
             });
+            d.open();
           }
         }
         Button { /* Save JSON */
@@ -126,16 +127,15 @@ ApplicationWindow {
           Layout.alignment: Qt.AlignRight
           onClicked:{
             var d = DynamicQML.createDynamicObject(mainwindow, "QFileDialog.qml", {"intent": "save"});
-            d.open();
-            d.onSubmitted.connect( function(obj) {
-              if (SequenceListModel.writeToJson(obj.path)) {
-                var msg = "Sequence list saved to \""+obj.path+"\"";
-                console.debug(msg);
+            d.onAccepted.connect( function() {
+              if (SequenceListModel.writeToJson(d.path)) {
+                var msg = "Sequence list saved to \""+d.path+"\"";
                 footer_status.text = msg;
-                field_json_path.text = obj.path;
+                field_json_path.text = d.path;
               }
-              obj.destroy(); /* cleanup */
+              d.destroy(); /* cleanup */
             });
+            d.open();
           }
         }
       }

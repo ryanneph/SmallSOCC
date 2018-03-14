@@ -325,6 +325,10 @@ class SequenceListModel(QtCore.QAbstractListModel):
         self.sizeChanged.emit(self.rowCount())
         return True
 
+    @pyqtSlot()
+    def clear(self):
+        self.removeRows(0, self.rowCount())
+
     # Virtual Base Method
     @pyqtSlot(int, int, int, result=bool)
     def moveRows(self, sourceRow: int, count: int, destinationChild: int):
