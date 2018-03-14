@@ -8,8 +8,8 @@ ApplicationWindow {
   visible: true
   title: mainwindow_title // global property injection
   id: mainwindow
-  width: 1000*sratio
-  height: 800*sratio
+  width: 1200*sratio
+  height: 900*sratio
   minimumHeight: 700*sratio
   minimumWidth: 850*sratio
   // maximumHeight: height
@@ -79,7 +79,7 @@ ApplicationWindow {
         Layout.alignment: Qt.AlignTop
         Layout.fillHeight: true
         Layout.minimumWidth: 250*sratio
-        Layout.maximumWidth: 600*sratio
+        Layout.maximumWidth: 500*sratio
         enabled: !isTreating
       }
       QSequenceList { /* ListView + Buttons */

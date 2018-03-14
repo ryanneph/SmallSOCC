@@ -30,12 +30,12 @@ RowLayout {
       enabled: !isTreating
 
       function next() {
-        if (currentIndex >= 0 && currentIndex < model.rowCount()-1) {
+        if (currentIndex >= 0 && currentIndex < model.size-1) {
           currentIndex += 1;
         }
       }
       function previous() {
-        if (currentIndex >= 1 && currentIndex < model.rowCount()) {
+        if (currentIndex >= 1 && currentIndex < model.size) {
           currentIndex -= 1;
         }
       }
@@ -174,6 +174,36 @@ RowLayout {
       Layout.fillWidth: true
       spacing: -1*children[2].borderwidth
 
+      function canStartTreatment() {
+        if (SequenceListModel.size <= 0) {
+          footer_status.text = 'Cannot start treatment without a valid leaflet configuration';
+          return false;
+        }
+        return true;
+      }
+      function startTreatment() {
+        if (!canStartTreatment()) { return; }
+        if (lvseq.currentIndex < 0) { lvseq.currentIndex = 0; }
+        footer_status.text = "Treatment started";
+        timer_treat.start()
+        timer_elapsed.restart()
+      }
+      function restartTreatment() {
+        if (!canStartTreatment()) { return; }
+        footer_status.text = "Treatment reset";
+        lvseq.currentIndex = 0;
+        timer_treat.restart();
+        timer_elapsed.restart();
+      }
+      function stopTreatment() {
+        if (isTreating) {
+          footer_status.text = "Treatment stopped";
+          timer_treat.stop();
+          timer_elapsed.stop();
+        }
+      }
+
+
       Label {
         text: "Treatment"
         font.pointSize: root.fontsize
@@ -183,8 +213,9 @@ RowLayout {
         Layout.fillWidth: true
       }
       Timer {
-        id: treatment_timer
+        id: timer_treat
         repeat: true
+        property int steps: 1
         onRunningChanged: {
           if (running == true) {
             isTreating = true
@@ -194,35 +225,83 @@ RowLayout {
           }
         }
         onTriggered: {
-          if (lvseq.currentIndex == -1 || lvseq.currentIndex >= (SequenceListModel.rowCount()-1)) {
+          if (lvseq.currentIndex == -1 || lvseq.currentIndex >= (SequenceListModel.size-1)) {
             stop()
             if (running == false) {
               footer_status.text = "Treatment finished"
+              var d = DynamicQML.createDynamicObject(mainwindow, "QMessageDialog.qml", {
+                'title': 'Treatment Completed',
+                'text': "Treatment delivery finished for " + steps + " segments in " + timer_elapsed.ftime_elapsed,
+                'standardButtons': 0x400 /* StandardButton.Ok | StandardButton.Cancel */
+              })
+              d.onAccepted.connect( function() { d.destroy(); /* cleanup */ });
+              d.open()
             } else {
               console.error("Error ending treatment")
             }
           } else {
             // console.debug('advancing to next leaflet configuration')
-            lvseq.next()
-            var duration = SequenceListModel.data(lvseq.currentIndex, 'timecode_ms')
-            // console.debug('beam-on duration is ' + duration + ' ms');
+            do {
+              steps++;
+              lvseq.next()
+              var duration = SequenceListModel.data(lvseq.currentIndex, 'timecode_ms')
+              if (duration <= 0) { console.warn('Skipping configuration #' + lvseq.currentIndex + ' with duration: ' + duration + ' ms'); }
+            } while (duration <= 0);
             interval = duration;
           }
+        }
+      }
+      Timer {
+        id: timer_elapsed
+        property int secs_elapsed: 0
+        property string ftime_elapsed: "00:00"
+        property string ftime_total: "00:00"
+
+        onRunningChanged: {
+          if (running == true) {
+            reset();
+            // calculate total time
+            var total = 0;
+            for (var i=lvseq.currentIndex; i<SequenceListModel.size; i++) {
+              total += parseFloat(SequenceListModel.data(i, 'timecode_ms'));
+            }
+            timer_elapsed.ftime_total = timer_elapsed.format_time(total/1000);
+          }
+        }
+
+        function pad_num(num, sz) {
+          var s = String(num.toFixed(0));
+          while(s.length < (sz || 2)) {s= "0" + s;}
+          return s;
+        }
+        function format_time(t) {
+          var mins = Math.floor(t/60);
+          var secs = t % 60;
+          return pad_num(mins, 2) + ":" + pad_num(secs, 2);
+        }
+        function update_time() {
+          ftime_elapsed = format_time(secs_elapsed);
+        }
+        function reset() {
+          secs_elapsed = 0;
+          update_time();
+        }
+
+        repeat: true
+        interval: 1000
+        onTriggered: {
+          secs_elapsed++;
+          update_time();
         }
       }
       QStylizedButton { /* Start Treatment */
         Layout.preferredHeight: root.btn_height
         Layout.fillWidth: true
-        text: !isTreating ? "Start" : "Pause"
+        text: !isTreating ? "Start" : "Stop"
         font.pointSize: root.fontsize
         onClicked: {
-          if (!isTreating) {
-            footer_status.text = "Treatment started";
-            treatment_timer.start()
-          } else {
-            footer_status.text = "Treatment paused";
-            treatment_timer.stop();
-          }
+          if (!isTreating) { treat_control_group.startTreatment(); }
+          else             { treat_control_group.stopTreatment(); }
         }
       }
       QStylizedButton { /* Reset Treatment */
@@ -230,11 +309,7 @@ RowLayout {
         Layout.fillWidth: true
         text: "Reset"
         font.pointSize: root.fontsize
-        onClicked: {
-          footer_status.text = "Treatment reset";
-          lvseq.currentIndex = 0;
-          treatment_timer.restart();
-        }
+        onClicked: { treat_control_group.restartTreatment(); }
       }
     }
     Rectangle { /* spacer */
@@ -250,6 +325,7 @@ RowLayout {
       Label {
         text: "Sequence"
         font.pointSize: root.fontsize
+        font.bold: true
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
       }
@@ -275,17 +351,31 @@ RowLayout {
           horizontalAlignment: Text.AlignHCenter
         }
       }
-      Rectangle { /* spacer */
-        Layout.preferredHeight: 15
+      Label {
+        text: "Elapsed:"
+        font.pointSize: root.fontsize
+        font.bold: true
         Layout.fillWidth: true
-        color: "transparent"
+        horizontalAlignment: Text.AlignHCenter
       }
       Label {
-        // TODO: FINISH
         id: treat_time_elapsed
-        text: "00:00"
-        visible: false
+        text: timer_elapsed.ftime_elapsed;
         font.pointSize: root.fontsize + 8*fratio
+        Layout.fillWidth: true
+        horizontalAlignment: Text.AlignHCenter
+      }
+      Label {
+        text: "Total:"
+        font.pointSize: root.fontsize //- 2*fratio
+        font.bold: true
+        Layout.fillWidth: true
+        horizontalAlignment: Text.AlignHCenter
+      }
+      Label {
+        id: treat_time_total
+        text: timer_elapsed.ftime_total;
+        font.pointSize: root.fontsize //- 2*fratio
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
       }
