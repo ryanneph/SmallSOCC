@@ -93,6 +93,7 @@ RowLayout {
         enabled: !isTreating
         Layout.preferredHeight: root.btn_height
         Layout.fillWidth: true
+        font.pointSize: root.fontsize
         text: "Edit"
         onClicked: {
           if (!lvseq.currentItem) { console.debug('current item is null'); return null; }
