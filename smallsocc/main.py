@@ -73,7 +73,7 @@ def preExit():
 ####################################################################################################
 # Start GUI
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Frontend for interfacing with SOC hardware',
+    parser = argparse.ArgumentParser(description='SmallSOCC {!s} - Frontend for interfacing with SOC hardware'.format(VERSION_FULL),
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default=None, help='set the loglevel')
     parser.add_argument('--logconf', type=str, default='logging.conf.json', help='path to log configuration')
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     logger.debug('Setting scaling ratios - general: {}; font: {}'.format(sratio, fratio))
 
     ## Set accessible properties/objects in QML Root Context
-    rootContext.setContextProperty("mainwindow_title", 'SOC Controller - v{!s}(alpha)'.format(VERSION_FULL))
+    rootContext.setContextProperty("mainwindow_title", 'SOC Controller - {!s}'.format(VERSION_FULL))
     # make seq. list model accessible to qml-listview
     rootContext.setContextProperty("SequenceListModel", samplelistmodel)
     pathhandler_instance = pathhandler.PathHandler()
