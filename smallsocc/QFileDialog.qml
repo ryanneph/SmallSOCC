@@ -11,12 +11,11 @@ FileDialog {
 
   // pass dialog data to handlers
   property string path: ""
-  signal onSubmitted(var thisdialog)
   onAccepted: {
     // cleanup url to get path
     var p = this.fileUrl.toString();
-    path = p.replace(/^(file:\/{3})|(qrc:\/{2})|(http:\/{2})/, "");
+    path = p.replace(/^(file:\/{2,3})|(qrc:\/{2})|(http:\/{2})/, "");
     path = PathHandler.cleanpath(path)
-    onSubmitted(this); // emit signal and return this object as argument
+    // console.debug('2:old path: '+p+' | cleaned path: ' + path)
   }
 }

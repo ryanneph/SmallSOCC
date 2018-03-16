@@ -8,18 +8,23 @@ ApplicationWindow {
   visible: true
   title: mainwindow_title // global property injection
   id: mainwindow
-  width: 1000
-  height: 800
-  minimumHeight: 700
-  minimumWidth: 850
+  width: 1200*sratio
+  height: 900*sratio
+  minimumHeight: 700*sratio
+  minimumWidth: 850*sratio
   // maximumHeight: height
   // maximumWidth: width
-  color: "#EEE"
+  property color color_bgbase: "#F4F4F4"
+  color: color_bgbase
   footer: QTimedText {id: "footer_status"; interval: 5000}
+
+  // global state variables
+  property bool isTreating: false
 
   // prompt a refresh of the SOC display using data from the currently selected SequenceItem
   // note: this will also prompt a change in HW positions to match display
-  function updateSOCConfig() {
+  function updateSOCConfig(publishtohw) {
+    if (publishtohw === undefined) { publishtohw = true; }
     if (qsequencelist.lvseq.currentIndex < 0 || SequenceListModel.rowCount() <= 0) {
       qsocdisplay.soc_display.reset();
     } else {
@@ -33,7 +38,9 @@ ApplicationWindow {
       }
     }
     // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
-    qsocdisplay.soc_display.onLeafletReleased(-1)
+    if (publishtohw) {
+      qsocdisplay.soc_display.onLeafletReleased(-1)
+    }
   }
 
   // startup signal/slot connections
@@ -59,47 +66,60 @@ ApplicationWindow {
     /* split into two horizontal control containers */
     id: controls_container
     anchors.fill: parent
-    anchors.margins: 20
+    anchors.margins: 10
+    anchors.bottomMargin: 0
     spacing: controls_container.anchors.margins
     RowLayout {
       id: upper_half
       spacing: controls_container.anchors.margins
+      Layout.fillWidth: true
 
-      QSOCDisplay { id: qsocdisplay }   /* QLeafletAssembly + controls */
-      QSequenceList { id: qsequencelist } /* ListView + Buttons */
+      QSOCDisplay { /* QLeafletAssembly + controls */
+        id: qsocdisplay
+        Layout.alignment: Qt.AlignTop
+        Layout.fillHeight: true
+        Layout.minimumWidth: 250*sratio
+        Layout.maximumWidth: 500*sratio
+        enabled: !isTreating
+      }
+      QSequenceList { /* ListView + Buttons */
+        id: qsequencelist
+        Layout.fillWidth: true
+      }
     }
 
     Pane { /* filedialog controls */
       id: bottom_frame
-      Layout.maximumHeight: 200
-      Layout.minimumHeight: 75
+      Layout.maximumHeight: 200*sratio
+      Layout.minimumHeight: 40*sratio
       Layout.fillWidth: true
+      enabled: !isTreating
       background: QDebugBorder {}
 
       RowLayout {
         anchors.fill: parent
+
         TextInput {
           id: field_json_path
           Layout.fillWidth: true
           readOnly: true
-          text: "json_path"
+          text: "Load a treatment plan..."
         }
         Button { /* Load JSON */
           text: "Load"
           Layout.alignment: Qt.AlignRight
           onClicked: {
             var d = DynamicQML.createDynamicObject(mainwindow, "QFileDialog.qml", {"intent": "load"});
-            d.open();
-            d.onSubmitted.connect( function(obj) {
-              if (SequenceListModel.readFromJson(obj.path)) {
-                field_json_path.text = obj.path;
-                var msg = "Sequence list loaded from \""+obj.path+"\"";
-                console.debug(msg);
+            d.onAccepted.connect( function() {
+              if (SequenceListModel.readFromJson(d.path)) {
+                field_json_path.text = d.path;
+                var msg = "Sequence list loaded from \""+d.path+"\"";
                 footer_status.text = msg;
-                field_json_path.text = obj.path;
+                field_json_path.text = d.path;
               }
-              obj.destroy(); /* cleanup */
+              d.destroy(); /* cleanup */
             });
+            d.open();
           }
         }
         Button { /* Save JSON */
@@ -107,16 +127,15 @@ ApplicationWindow {
           Layout.alignment: Qt.AlignRight
           onClicked:{
             var d = DynamicQML.createDynamicObject(mainwindow, "QFileDialog.qml", {"intent": "save"});
-            d.open();
-            d.onSubmitted.connect( function(obj) {
-              if (SequenceListModel.writeToJson(obj.path)) {
-                var msg = "Sequence list saved to \""+obj.path+"\"";
-                console.debug(msg);
+            d.onAccepted.connect( function() {
+              if (SequenceListModel.writeToJson(d.path)) {
+                var msg = "Sequence list saved to \""+d.path+"\"";
                 footer_status.text = msg;
-                field_json_path.text = obj.path;
+                field_json_path.text = d.path;
               }
-              obj.destroy(); /* cleanup */
+              d.destroy(); /* cleanup */
             });
+            d.open();
           }
         }
       }

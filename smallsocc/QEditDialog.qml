@@ -6,8 +6,6 @@ import QtQuick.Layouts 1.3
 Dialog {
   title: "Sequence Item Editor"
   standardButtons: Dialog.Save | Dialog.Discard
-  // width: 600
-  // height: 500
 
   // pass new data back to handler
   signal onSubmitted(var newdata)
@@ -16,7 +14,6 @@ Dialog {
     "rot_gantry_deg": text_gantry.text,
     "description":    text_desc.text,
     "timecode_ms":    text_timecode.text
-    // "extension_list": [0,0,0,0,0,0,0,0]
   })
 
   // populate with current data
@@ -49,16 +46,16 @@ Dialog {
       Layout.fillWidth: true
       validator: IntValidator {bottom: -360; top: 360}
     }
-    Label { text: "Description" }
-    TextField {
-      id: text_desc
-      Layout.fillWidth: true
-    }
-    Label { text: "Timecode (ms)" }
+    Label { text: "Duration (ms): " }
     TextField {
       id: text_timecode
       Layout.fillWidth: true
       validator: DoubleValidator {bottom: 0}
+    }
+    Label { text: "Description: " }
+    TextField {
+      id: text_desc
+      Layout.fillWidth: true
     }
   }
 }

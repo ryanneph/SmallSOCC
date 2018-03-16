@@ -10,13 +10,19 @@ Leaflet {
   function isNegative()   { return !isPositive(); }
   property var dir: isPositive() ? 1 : -1
   property point startpos
-  property int   full_range
-  property int   compext
+  property int   full_range // full range of motion in pixels
+  property int   compext // complementary leaflet's current extension
   property bool  draggable: false
-  property bool  preventCollisions: true
-  property int   collide: {
-    if (preventCollisions) { compext; }
+  property bool  preventCollisions: false
+  // mapping of max_safe_extension to pixels from startpos
+  property int   collidepos: {
+    if (preventCollisions) { compext/max_extension*full_range; }
     else { 0; }
+  }
+  // max extension given that compext is set and collisions are avoided
+  property int max_safe_extension: {
+    if (preventCollisions) { max_extension - compext; }
+    else { max_extension; }
   }
 
   x: startpos.x
@@ -35,6 +41,9 @@ Leaflet {
   // Visual Properties
   property int direction: Leaflet.Positive
   property int orientation: Leaflet.Horizontal
+  property color color_leaf: "#e09947"
+  property color color_stem: "#222222"
+  property real  opacity_leaf: 0.85
 
   // reset x,y to start value
   function reset() { extension = 0; }
@@ -80,15 +89,14 @@ Leaflet {
     x: isHorizontal() && isPositive() ? -rect_stem.width : 0
     y: isVertical() && isPositive() ? -rect_stem.height : 0
     color: "transparent"
+    opacity: root.opacity_leaf
 
     Rectangle {
       id: rect_leaf
       width: root.width
       height: root.height
-      border.color: Qt.darker(color, 1.4)
-      property color base_color: "#e09947"
-      color: base_color
-      opacity: 0.85
+      border.color: Qt.darker(color, 1.25)
+      color: color_leaf
       anchors.right: {
         if (isHorizontal() && isPositive()) {
           return compound.right
@@ -112,8 +120,8 @@ Leaflet {
     }
     Rectangle {
       id: rect_stem
-      color: "#222222"
-      border.color: Qt.darker(color, 1.8)
+      color: root.color_stem
+      border.color: Qt.darker(color, 1.4)
       property var factor: 0.2;
       width: isHorizontal() ? (rect_leaf.width) : (factor*rect_leaf.width)
       height: isHorizontal() ? (factor*rect_leaf.height) : (rect_leaf.height)
@@ -145,8 +153,8 @@ Leaflet {
       anchors.horizontalCenter: rect_leaf.horizontalCenter
       anchors.verticalCenter: rect_leaf.verticalCenter
       text: index
-      color: Qt.darker(rect_leaf.color, 1.05)
-      font.pointSize: 14
+      color: Qt.darker(rect_leaf.color, 1.1)
+      font.pointSize: 12
     }
   }
   MouseArea {
@@ -158,36 +166,30 @@ Leaflet {
 
     drag.minimumX: {
       if (isHorizontal()) {
-        isPositive() ? parent.startpos.x : parent.startpos.x - (parent.full_range-root.collide)
+        isPositive() ? parent.startpos.x : parent.startpos.x - (parent.full_range-root.collidepos)
       } else { 0 }
     }
     drag.maximumX: {
       if (isHorizontal()) {
-        isPositive() ? parent.startpos.x + (root.full_range-root.collide) : parent.startpos.x
+        isPositive() ? parent.startpos.x + (root.full_range-root.collidepos) : parent.startpos.x
       } else { 0 }
     }
     drag.minimumY: {
       if (isVertical()) {
-        isPositive() ? parent.startpos.y : parent.startpos.y - (full_range-root.collide)
+        isPositive() ? parent.startpos.y : parent.startpos.y - (full_range-root.collidepos)
       } else { 0 }
     }
     drag.maximumY: {
       if (isVertical()) {
-        isPositive() ? parent.startpos.y + (full_range-root.collide) : parent.startpos.y
+        isPositive() ? parent.startpos.y + (full_range-root.collidepos) : parent.startpos.y
       } else { 0 }
     }
 
     onPressed: {
-      rect_leaf.color = "#f1aa50"
-      // console.log("index:     " + index);
-      // console.log("drag.minX: " + drag.minimumX);
-      // console.log("drag.maxX: " + drag.maximumX);
-      // console.log("drag.minY: " + drag.minimumY);
-      // console.log("drag.maxX: " + drag.maximumY);
-      // console.log("comp:      " + root.collide);
+      rect_leaf.color = Qt.darker(root.color_leaf, 1.1)
     }
     onReleased: {
-      rect_leaf.color = rect_leaf.base_color
+      rect_leaf.color = root.color_leaf
       // keep from firing a loop of x/y change -> extChange -> repeat...
       enableextsignal = false;
       extension = extfromxy();

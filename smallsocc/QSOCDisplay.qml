@@ -8,38 +8,38 @@ ColumnLayout {
 
   QLeafletAssembly { /* Leaflet Display */
     id: soc_display
-    Layout.alignment: Qt.AlignTop
     Layout.fillWidth: true /* dynamically size */
     Layout.preferredHeight: width /* keep square */
-    Layout.minimumWidth: 200
-    Layout.maximumWidth: 500
     draggable: true
-    preventCollisions: false
+    preventCollisions: true
+    collision_buffer: 0 /* set spacing between companion leaflets to prevent hw issues */
+    color_bg:    "transparent"
+    color_field: "#FFFEE5"
+    color_leaf:  "#7B7B7B"
+    color_stem:  "#000000"
+    opacity_leaf: 0.90
   }
   Pane {
     id: leaflet_editor
     clip: true
-    Layout.fillHeight: true
-    // Layout.preferredWidth: soc_display.width
+    Layout.fillWidth: true
 
     // TODO: DEBUG
     background: QDebugBorder {}
 
     GridLayout { /* controls under soc_display */
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.top: parent.top
+      anchors.fill: parent
       columns: 2
 
       Label {
         text: "Leaflet:"
-        font.pixelSize: 16
+        font.pointSize: 12*fratio
         Layout.column: 0
         Layout.row: 0
       }
       Label {
         text: "Extension:"
-        font.pixelSize: 16
+        font.pointSize: 12*fratio
         Layout.column: 0
         Layout.row: 1
       }
@@ -62,7 +62,7 @@ ColumnLayout {
         Layout.row: 1
         editable: true
         from: 0
-        to: soc_display.max_extension
+        to: soc_display.leaflets[leaflet_spinbox.value].max_safe_extension
         value: soc_display.leaflets[leaflet_spinbox.value].extension
         onValueModified: {
           soc_display.setExtension(leaflet_spinbox.value, value)
@@ -73,8 +73,7 @@ ColumnLayout {
       Button { /* Save SequenceItem to ListModel */
         Layout.row: 2
         Layout.fillWidth: true
-        Layout.columnSpan: 2
-        text: "Save Sequence Item"
+        text: "Save Leaflet Configuration"
         onClicked: {
           var extmap = soc_display.getExtension();
           if (qsequencelist.lvseq.currentItem == null) {
@@ -83,13 +82,23 @@ ColumnLayout {
             qsequencelist.lvseq.currentIndex = 0;
 
           }
-          if (!SequenceListModel.setData(qsequencelist.lvseq.currentIndex, extmap, 'extension_list')) {
-            console.warn("failed to save 'extension_list' to item "+qsequencelist.lvseq.currentIndex+1);
+          var _data = {'extension_list': extmap, 'type': 'Manual'}
+          if (!SequenceListModel.setData(qsequencelist.lvseq.currentIndex, _data)) {
+            console.warn("failed to save 'extension_list' to item " + (parseInt(qsequencelist.lvseq.currentIndex, 10)+1));
             return;
           }
-          // TODO: maybe we can update display here without publishing same extensions twice
+          updateSOCConfig(false);
+          footer_status.text = 'Leaflet configuration saved to item #' + (parseInt(qsequencelist.lvseq.currentIndex, 10)+1);
+        }
+      }
+      Button { /* Reset SequenceItem */
+        Layout.row: 2
+        Layout.column: 1
+        Layout.fillWidth: true
+        text: "Reset Leaflet Configuration"
+        onClicked: {
           updateSOCConfig();
-          footer_status.text = 'Leaflet configuration saved to item #' + qsequencelist.lvseq.currentIndex+1;
+          footer_status.text = 'Leaflet configuration reset';
         }
       }
 
@@ -113,6 +122,11 @@ ColumnLayout {
       //   text: mainwindow.height
       //   Layout.column: 1
       //   Layout.row: 4
+      // }
+      // Label {
+      //   text: ul_col.width
+      //   Layout.column: 1
+      //   Layout.row: 5
       // }
     }
   }
