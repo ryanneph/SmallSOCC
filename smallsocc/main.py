@@ -33,7 +33,6 @@ PARENT = os.path.abspath(dirname(dirname(__file__)))
 TEST_FILES = os.path.join(PARENT, os.path.pardir, 'test_files')
 TEMP = os.path.join(PARENT, 'temp')
 
-# TODO: Add proper python logger and integrate with Qt Message Handler
 def qt_message_handler(mode, context, message):
     if mode == QtCore.QtInfoMsg:
         # console.info()
@@ -75,29 +74,30 @@ def preExit():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SmallSOCC {!s} - Frontend for interfacing with SOC hardware'.format(VERSION_FULL),
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default=None, help='set the loglevel')
+    parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default='NOTSET', help='set the loglevel')
     parser.add_argument('--logconf', type=str, default='logging.conf.json', help='path to log configuration')
     args = parser.parse_args()
 
     # initialize logger
     soclog.init_logging(level=logging._nameToLevel.get(args.loglevel, None), config_path=args.logconf)
 
-    # TODO: DEBUG
-    # load example sequence, for rapid debugging
-    try:
-        samplelistmodel = sequence.SequenceListModel.fromJson(os.path.join(TEST_FILES, 'test_output.json'))
-    except Exception as e:
-        logger.warning('FAILED TO READ DEBUG JSON FILE : {!s}'.format(e))
-        # SAMPLE ITEMS FOR DEBUG
-        from sequence import SequenceItem, SequenceItemType
-        sample_sequenceitems = [
-            SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=0, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
-            SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
-            SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=3000, description="descriptive text3"),
-            SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=4500, description="descriptive text4"),
-        ]
-        samplelistmodel = sequence.SequenceListModel(elements=sample_sequenceitems)
-    # TODO: END DEBUG
+    listmodel = sequence.SequenceListModel()
+    if args.loglevel is not 'NOTSET' and logging._nameToLevel[args.loglevel] <= logging.DEBUG:
+        # load example sequence, for rapid debugging
+        try:
+            listmodel = sequence.SequenceListModel.fromJson(os.path.join(TEST_FILES, 'test_output.json'))
+        except Exception as e:
+            logger.warning('FAILED TO READ DEBUG JSON FILE : {!s}'.format(e))
+            # SAMPLE ITEMS FOR DEBUG
+            from sequence import SequenceItem, SequenceItemType
+            sample_sequenceitems = [
+                SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=0, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
+                SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
+                SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=3000, description="descriptive text3"),
+                SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=4500, description="descriptive text4"),
+            ]
+            listmodel = sequence.SequenceListModel(elements=sample_sequenceitems)
+
 
     HWSOC(8, HID=None) # init singleton instance for controlling hardware
 
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     ## Set accessible properties/objects in QML Root Context
     rootContext.setContextProperty("mainwindow_title", 'SOC Controller - {!s}'.format(VERSION_FULL))
     # make seq. list model accessible to qml-listview
-    rootContext.setContextProperty("SequenceListModel", samplelistmodel)
+    rootContext.setContextProperty("SequenceListModel", listmodel)
     pathhandler_instance = pathhandler.PathHandler()
     rootContext.setContextProperty("PathHandler", pathhandler_instance)
     rootContext.setContextProperty("sratio", sratio)
