@@ -29,9 +29,10 @@ import pathhandler
 logger = logging.getLogger(__name__)
 
 # define paths
-PARENT = os.path.abspath(dirname(dirname(__file__)))
-TEST_FILES = os.path.join(PARENT, os.path.pardir, 'test_files')
-TEMP = os.path.join(PARENT, 'temp')
+LIB_DIR = os.path.abspath(dirname(__file__))
+INSTALL_DIR = os.path.abspath(dirname(dirname(__file__)))
+TEST_FILES = os.path.join(INSTALL_DIR, os.path.pardir, 'test_files')
+TEMP = os.path.join(INSTALL_DIR, 'temp')
 
 def qt_message_handler(mode, context, message):
     if mode == QtCore.QtInfoMsg:
@@ -74,8 +75,8 @@ def preExit():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SmallSOCC {!s} - Frontend for interfacing with SOC hardware'.format(VERSION_FULL),
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default='NOTSET', help='set the loglevel')
-    parser.add_argument('--logconf', type=str, default='logging.conf.json', help='path to log configuration')
+    parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default='WARNING', help='set the loglevel')
+    parser.add_argument('--logconf', type=str, default=os.path.join(LIB_DIR, 'logging.conf.json'), help='path to log configuration')
     args = parser.parse_args()
 
     # initialize logger
