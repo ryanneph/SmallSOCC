@@ -131,11 +131,11 @@ class SequenceItem(QtCore.QObject):
             val = val.toVariant()
 
         if val is not None:
-            logger.debug2(f'setting new value for \"{key}\": {val}')
+            logger.debug2('setting new value for \"{}\": {}'.format(key, val))
             self._members[key].value = val
         elif key is not None:
             for k, v in key.items():
-                logger.debug2(f'setting new value for \"{k}\": {v}')
+                logger.debug2('setting new value for \"{}\": {}'.format(k, v))
                 self._members[k].value = v
         else: return False
         self.setModified()
@@ -337,7 +337,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         or (destinationChild < 0 or self.rowCount() <= destinationChild):
             return False
         if count > 1:
-            raise NotImplementedError(f'{__name__} is not yet implemented for count > 1')
+            raise NotImplementedError('{} is not yet implemented for count > 1'.format(__name__))
 
         # see http://doc.qt.io/qt-5/qabstractitemmodel.html#beginMoveRows for explanation
         if (destinationChild < sourceRow):

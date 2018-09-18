@@ -13,7 +13,7 @@ class LeafletAssemblyAttached(QObject):
         QObject.__init__(self, parent)
         self._index = LeafletAssemblyAttached.next_available
         LeafletAssemblyAttached.next_available += 1
-        logger.debug(f'instantiating leaflet #{self._index} and attaching index property')
+        logger.debug('instantiating leaflet #{:d} and attaching index property'.format(self._index))
 
     @pyqtProperty(int, constant=True)
     def index(self):

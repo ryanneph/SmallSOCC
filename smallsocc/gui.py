@@ -18,6 +18,9 @@ from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtQuick import QQuickItem
 
+FILE_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, FILE_DIR)
+
 import soclog
 from version import VERSION_FULL
 from hardware import HWSOC
@@ -72,7 +75,7 @@ def preExit():
 
 ####################################################################################################
 # Start GUI
-if __name__ == '__main__':
+def start_gui():
     parser = argparse.ArgumentParser(description='SmallSOCC {!s} - Frontend for interfacing with SOC hardware'.format(VERSION_FULL),
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default='WARNING', help='set the loglevel')
@@ -154,6 +157,8 @@ if __name__ == '__main__':
     #  rootObject = engine.rootObjects()[0]
     #  btns = rootObject.findChildren(QQuickItem, "list_buttons", QtCore.Qt.FindChildrenRecursively)[0]
     #  btns.findChild(QQuickItem, 'btn_moveup').clicked.connect(lambda: print('moveup clicked'))
+    return app.exec_()
 
+if __name__ == '__main__':
     # block until window is closed - event handler loop
-    sys.exit(app.exec_())
+    sys.exit(start_gui)
