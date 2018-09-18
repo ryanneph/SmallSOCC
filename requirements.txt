@@ -1,4 +1,0 @@
-PyOpenGL==3.1.1a1
-PyQt5==5.9
-pyserial==3.4
-sip==4.19.3

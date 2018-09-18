@@ -76,7 +76,7 @@ def preExit():
 ####################################################################################################
 # Start GUI
 def start_gui():
-    parser = argparse.ArgumentParser(description='SmallSOCC {!s} - Frontend for interfacing with SOC hardware'.format(VERSION_FULL),
+    parser = argparse.ArgumentParser(description='SmallSOCC v{!s} - Frontend for interfacing with SOC hardware'.format(VERSION_FULL),
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default='WARNING', help='set the loglevel')
     parser.add_argument('--logconf', type=str, default=os.path.join(LIB_DIR, 'logging.conf.json'), help='path to log configuration')

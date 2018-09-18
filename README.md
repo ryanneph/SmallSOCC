@@ -7,33 +7,57 @@ Welcome to SmallSOCC, a simple gui for commanding an arduino based linear steppe
 
 ### Dependencies
 Python package dependencies are handled during setup or can be installed manually using `pip install <package-name>`
-
-- [Python >=3.4](https://www.python.org/downloads/)
-- [PyQt5 5.x](https://www.riverbankcomputing.com/software/pyqt/download5)
-- PyOpenGL 3.x
-- PySerial 3.x
-
+(see setup.py for up-to-date dependencies)
 ### Installation
-```
+clone the repository:
+```bash
 git clone https://github.com/ryanneph/SmallSOCC.git
-cd SmallSOCC && python setup.py install
+cd SmallSOCC
+```
+then install using pip or pipenv:
+```bash
+pip install .
+```
+or
+```bash
+pip install pipenv
+pipenv install .
+```
+finally run with: 
+```bash
+smallsocc
+```
+or 
+```bash
+python smallsocc/gui.py
 ```
 ### Development
-#### Using virtualenv
-```bash 
+When installed as a development package, changes to the source code will be immediately reflected the next
+time `smallsocc` is run, without requiring a re-installation.
+
+First clone the repository:
+```bash
 git clone https://github.com/ryanneph/SmallSOCC.git
-pip install virtualenv
-virtualenv soc_dev && source soc_dev/bin/activate
-cd SmallSOCC && python setup.py develop
+cd SmallSOCC
+```
+Then install:
+#### Using pipenv (preferred way)
+```bash
+pip install pipenv
+pipenv install -e .
 ```
 #### Using Anaconda/Conda
 ```bash
 conda create -n soc_dev python=3
 conda activate soc_dev
-cd SmallSOCC && python setup.py develop
+python -m pip install -e .
 ```
-If setup fails to install all dependencies, you may install them manually using:
-`pip install <package-name>`
+#### Using virtualenv
+```bash 
+pip install virtualenv
+virtualenv soc_dev && source soc_dev/bin/activate
+python -m pip install -e .
+```
 
 ----------------------------
 ## Addendum
