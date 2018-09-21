@@ -18,7 +18,7 @@ ApplicationWindow {
   color: color_bgbase
   footer: QTimedText {id: "footer_status"; interval: 5000}
 
-  // global state variables
+  // global state variables TODO: Replace with application state
   property bool isTreating: false
 
   // prompt a refresh of the SOC display using data from the currently selected SequenceItem
@@ -26,7 +26,7 @@ ApplicationWindow {
   function updateSOCConfig(publishtohw) {
     if (publishtohw === undefined) { publishtohw = true; }
     if (qsequencelist.lvseq.currentIndex < 0 || SequenceListModel.rowCount() <= 0) {
-      qsocdisplay.soc_display.reset();
+      soc_display.reset();
     } else {
       var map = {};
       var extarray = SequenceListModel.data(qsequencelist.lvseq.currentIndex, 'extension_list')
@@ -34,13 +34,47 @@ ApplicationWindow {
         for (var i=0; i<extarray.length; ++i) {
           map[i] = extarray[i];
         }
-        qsocdisplay.soc_display.setExtension(map);
+        soc_display.setExtension(map);
       }
     }
     // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
     if (publishtohw) {
-      qsocdisplay.soc_display.onLeafletReleased(-1)
+      soc_display.onLeafletReleased(-1)
     }
+  }
+
+  StateGroup {
+    id: app_state
+    state: 'MODE_NORMAL'
+    states: [
+      State {
+        name: "MODE_NORMAL"
+      },
+      State {
+        name: "MODE_CALIBRATE"
+        PropertyChanges {
+          target: btn_calibrate
+          visible: false
+        }
+        PropertyChanges {
+          target: btn_calibrate_accept
+          visible: true
+        }
+        PropertyChanges {
+          target: btn_calibrate_cancel
+          visible: true
+        }
+        PropertyChanges {
+          target: soc_display
+          preventCollisions: false
+          limitTravel: false
+        }
+        PropertyChanges {
+          target: qsequencelist
+          enabled:false
+        }
+      }
+    ]
   }
 
   // startup signal/slot connections
@@ -52,8 +86,8 @@ ApplicationWindow {
     });
 
     // Keep SOC Display valid on window resize - no HW changes occur
-    mainwindow.onWidthChanged.connect(function() { qsocdisplay.soc_display.refresh(); });
-    mainwindow.onHeightChanged.connect(function() { qsocdisplay.soc_display.refresh(); });
+    mainwindow.onWidthChanged.connect(function() { soc_display.refresh(); });
+    mainwindow.onHeightChanged.connect(function() { soc_display.refresh(); });
 
     // select nothing and prevent hardware from synchronizing on application launch
     qsequencelist.lvseq.currentIndex = -1;
@@ -61,6 +95,7 @@ ApplicationWindow {
     // keep SOC Display and HW in sync with currentIndex in listview
     qsequencelist.lvseq.onCurrentItemChanged.connect(updateSOCConfig);
   }
+
 
   ColumnLayout {
     /* split into two horizontal control containers */
@@ -74,13 +109,189 @@ ApplicationWindow {
       spacing: controls_container.anchors.margins
       Layout.fillWidth: true
 
-      QSOCDisplay { /* QLeafletAssembly + controls */
+      ColumnLayout {
         id: qsocdisplay
         Layout.alignment: Qt.AlignTop
         Layout.fillHeight: true
         Layout.minimumWidth: 250*sratio
         Layout.maximumWidth: 500*sratio
         enabled: !isTreating
+
+        QLeafletAssembly { /* Leaflet Display */
+          id: soc_display
+          Layout.fillWidth: true /* dynamically size */
+          Layout.preferredHeight: width /* keep square */
+          draggable: true
+          limitTravel: true
+          preventCollisions: true
+          collision_buffer: 0 /* set spacing between companion leaflets to prevent hw issues */
+          color_bg:    "transparent"
+          color_field: "#FFFEE5"
+          color_leaf:  "#7B7B7B"
+          color_stem:  "#000000"
+          opacity_leaf: 0.90
+        }
+        Pane {
+          id: leaflet_editor
+          clip: true
+          Layout.fillWidth: true
+
+          // TODO: DEBUG
+          background: QDebugBorder {}
+
+          GridLayout { /* controls under soc_display */
+            anchors.fill: parent
+            columns: 2
+
+            Label {
+              text: "Leaflet:"
+              font.pointSize: 12*fratio
+              Layout.column: 0
+              Layout.row: 0
+            }
+            Label {
+              text: "Extension:"
+              font.pointSize: 12*fratio
+              Layout.column: 0
+              Layout.row: 1
+            }
+            SpinBox {
+              id: leaflet_spinbox
+              Layout.column: 1
+              Layout.row: 0
+              editable: true
+              from: 0
+              to: soc_display.nleaflets-1
+              value: from
+              Component.onCompleted: {
+                // change spinbox value when leaflet is clicked
+                soc_display.onLeafletPressed.connect(function(index) { value = index; });
+              }
+            }
+            SpinBox {
+              id: ext_spinbox
+              Layout.column: 1
+              Layout.row: 1
+              editable: true
+              from: 0
+              to: soc_display.leaflets[leaflet_spinbox.value].max_safe_extension
+              value: soc_display.leaflets[leaflet_spinbox.value].extension
+              onValueModified: {
+                soc_display.setExtension(leaflet_spinbox.value, value)
+                // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
+                soc_display.onLeafletReleased(leaflet_spinbox.value)
+              }
+            }
+            Button { /* Save SequenceItem to ListModel */
+              Layout.row: 2
+              Layout.fillWidth: true
+              text: "Save Leaflet Configuration"
+              onClicked: {
+                var extmap = soc_display.getExtension();
+                if (qsequencelist.lvseq.currentItem == null) {
+                  // if no item is selected, insert new item at end of model and save leaflet config to it
+                  SequenceListModel.insertRows()
+                  qsequencelist.lvseq.currentIndex = 0;
+
+                }
+                var _data = {'extension_list': extmap, 'type': 'Manual'}
+                if (!SequenceListModel.setData(qsequencelist.lvseq.currentIndex, _data)) {
+                  console.warn("failed to save 'extension_list' to item " + (parseInt(qsequencelist.lvseq.currentIndex, 10)+1));
+                  return;
+                }
+                updateSOCConfig(false);
+                footer_status.text = 'Leaflet configuration saved to item #' + (parseInt(qsequencelist.lvseq.currentIndex, 10)+1);
+              }
+            }
+            Button { /* Reset SequenceItem */
+              Layout.row: 2
+              Layout.column: 1
+              Layout.fillWidth: true
+              text: "Reset Leaflet Configuration"
+              onClicked: {
+                updateSOCConfig();
+                footer_status.text = 'Leaflet configuration reset';
+              }
+            }
+            Button { /* Start/Accept Calibration */
+              id: btn_calibrate
+              Layout.topMargin: 20
+              Layout.row: 3
+              Layout.column: 0
+              Layout.columnSpan: 2
+              Layout.fillWidth: true
+              text: "Begin Leaflet Calibration"
+              onClicked: {
+                footer_status.text = 'Begin Calibration';
+                app_state.state = "MODE_CALIBRATE"
+              }
+            }
+            Button { /* Start Calibration */
+              id: btn_calibrate_accept
+              Layout.topMargin: 20
+              Layout.row: 3
+              Layout.column: 0
+              Layout.fillWidth: true
+              visible: false
+              text: "Accept Calibration"
+              onClicked: {
+                footer_status.text = "Calibration Accepted";
+                app_state.state = "MODE_NORMAL"
+              }
+            }
+            Button { /* Start Calibration */
+              id: btn_calibrate_cancel
+              Layout.topMargin: 20
+              Layout.row: 3
+              Layout.column: 1
+              Layout.fillWidth: true
+              visible: false
+              text: "Cancel Calibration"
+              onClicked: {
+                footer_status.text = "Calibration Cancelled";
+                app_state.state = "MODE_NORMAL"
+              }
+            }
+
+            //DEBUG
+            GridLayout { /* controls under soc_display */
+              // anchors.fill: parent
+              columns: 2
+              visible: debug_mode
+
+              Label {
+                text: "win width:"
+                Layout.column: 0
+                Layout.row: 0
+              }
+              Label {
+                text: mainwindow.width
+                Layout.column: 1
+                Layout.row: 0
+              }
+              Label {
+                text: "win height:"
+                Layout.column: 0
+                Layout.row: 1
+              }
+              Label {
+                text: mainwindow.height
+                Layout.column: 1
+                Layout.row: 1
+              }
+              Label {
+                text: "win height:"
+                Layout.column: 0
+                Layout.row: 2
+              }
+              Label {
+                text: controls_container.width
+                Layout.column: 1
+                Layout.row: 2
+              }
+            }
+          }
+        }
       }
       QSequenceList { /* ListView + Buttons */
         id: qsequencelist

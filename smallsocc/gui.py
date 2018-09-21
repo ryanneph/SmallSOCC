@@ -148,15 +148,19 @@ def start_gui():
     rootContext.setContextProperty("PathHandler", pathhandler_instance)
     rootContext.setContextProperty("sratio", sratio)
     rootContext.setContextProperty("fratio", fratio)
+    rootContext.setContextProperty("debug_mode", logging._nameToLevel[args.loglevel]<=logging.DEBUG)
 
     # load layout
-    engine.load(QtCore.QUrl(os.path.join(dirname(__file__), 'main.qml')))
+    engine.load(os.path.join(dirname(__file__), 'main.qml'))
+
 
     ## connect signals to slots - unnecessary, example of grabbing qml objects from py-code
     # listview buttons
     #  rootObject = engine.rootObjects()[0]
     #  btns = rootObject.findChildren(QQuickItem, "list_buttons", QtCore.Qt.FindChildrenRecursively)[0]
     #  btns.findChild(QQuickItem, 'btn_moveup').clicked.connect(lambda: print('moveup clicked'))
+
+    # run event loop
     return app.exec_()
 
 if __name__ == '__main__':

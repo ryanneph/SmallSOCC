@@ -11,6 +11,7 @@ LeafletAssembly {
   property color color_stem: "#222222"
   property real  opacity_leaf: 0.85
   property bool draggable: true
+  property bool limitTravel: true
   property bool preventCollisions: false
   property int  collision_buffer: 0
   readonly property int nleaflets: leaflets.length

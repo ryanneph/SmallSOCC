@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "de4dccad009af530ca8bcf0f98d46d89585ad77181ab708351ad3af4d7640aff"
+            "sha256": "799eea1ce05a188b1391c83eb5bb643307d86aded8fa0082fef781123f036272"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -59,6 +59,10 @@
                 "sha256:e72955e12f4fccf27aa421be383453d697b8a44bde2cc26b08d876fd492d0174"
             ],
             "version": "==4.19.8"
+        },
+        "smallsocc": {
+            "editable": true,
+            "path": "."
         }
     },
     "develop": {}
