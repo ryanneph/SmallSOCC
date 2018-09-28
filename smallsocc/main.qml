@@ -49,30 +49,17 @@ ApplicationWindow {
     states: [
       State {
         name: "MODE_NORMAL"
+        PropertyChanges { target: btn_calibrate_accept; visible: false }
+        PropertyChanges { target: btn_calibrate_cancel; visible: false }
+        PropertyChanges { target: btn_calibrate; visible: true }
       },
       State {
         name: "MODE_CALIBRATE"
-        PropertyChanges {
-          target: btn_calibrate
-          visible: false
-        }
-        PropertyChanges {
-          target: btn_calibrate_accept
-          visible: true
-        }
-        PropertyChanges {
-          target: btn_calibrate_cancel
-          visible: true
-        }
-        PropertyChanges {
-          target: soc_display
-          preventCollisions: false
-          limitTravel: false
-        }
-        PropertyChanges {
-          target: qsequencelist
-          enabled:false
-        }
+        PropertyChanges { target: btn_calibrate; visible: false }
+        PropertyChanges { target: btn_calibrate_accept; visible: true }
+        PropertyChanges { target: btn_calibrate_cancel; visible: true }
+        PropertyChanges { target: soc_display; preventCollisions: false; limitTravel: false }
+        PropertyChanges { target: qsequencelist; enabled:false }
       }
     ]
   }
@@ -213,39 +200,46 @@ ApplicationWindow {
                 footer_status.text = 'Leaflet configuration reset';
               }
             }
-            Button { /* Start/Accept Calibration */
+            QStylizedButton { /* Start/Accept Calibration */
               id: btn_calibrate
-              Layout.topMargin: 20
+              // Layout.topMargin: 20
               Layout.row: 3
               Layout.column: 0
               Layout.columnSpan: 2
               Layout.fillWidth: true
-              text: "Begin Leaflet Calibration"
+              borderwidth: 0
+              textcolor: '#333'
+              bgcolor: '#ddd'
+              text: "Calibrate Leaflet Positions"
               onClicked: {
                 footer_status.text = 'Begin Calibration';
                 app_state.state = "MODE_CALIBRATE"
               }
             }
-            Button { /* Start Calibration */
+            QStylizedButton { /* Start Calibration */
               id: btn_calibrate_accept
-              Layout.topMargin: 20
+              // Layout.topMargin: 20
               Layout.row: 3
               Layout.column: 0
               Layout.fillWidth: true
               visible: false
+              bgcolor: "#37ee44"
+              borderwidth: 0
               text: "Accept Calibration"
               onClicked: {
                 footer_status.text = "Calibration Accepted";
                 app_state.state = "MODE_NORMAL"
               }
             }
-            Button { /* Start Calibration */
+            QStylizedButton { /* Start Calibration */
               id: btn_calibrate_cancel
-              Layout.topMargin: 20
+              // Layout.topMargin: 20
               Layout.row: 3
               Layout.column: 1
               Layout.fillWidth: true
               visible: false
+              bgcolor: "#ff4f4f"
+              borderwidth: 0
               text: "Cancel Calibration"
               onClicked: {
                 footer_status.text = "Calibration Cancelled";
