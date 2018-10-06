@@ -3,13 +3,36 @@ import logging
 from borg import Borg
 import serial
 from serial.tools import list_ports
+from serial.threaded import Protocol, ReaderThread
 
 logger = logging.getLogger(__name__)
+
+class RecvSignalHandler(Protocol):
+    def __init__(self):
+        super().__init__()
+
+    def connection_made(self, transport):
+        logger.debug2("began threaded serial read-loop")
+        pass
+
+    def data_recieved(self, data):
+        if data:
+            logger.debug(str(data))
+
+    def connection_lost(self, exc):
+        if exc:
+            logger.debug2("lost connection to serial interface")
+            raise exc
+
 
 class HWSOC(Borg):
     """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
     _shared_state = {}
     MAGIC_BYTES = bytes([ 0xFF, 0xD7 ])
+    PRE_ABSPOS_ONE = bytes([ 0xB1 ])
+    PRE_ABSPOS_ALL = bytes([ 0xB2 ])
+    PRE_RELPOS_ONE = bytes([ 0xC1 ])
+    PRE_RELPOS_ALL = bytes([ 0xC2 ])
 
     def __init__(self, nleaflets=None, HID=None, BAUD=115200):
         """
@@ -22,6 +45,7 @@ class HWSOC(Borg):
             return
 
         self._fserial = None
+        self.recvsighandler = None
         self.EMULATOR_MODE = False
         self._USB_HID=HID
         self._BAUD = BAUD
@@ -79,6 +103,8 @@ class HWSOC(Borg):
                 logger.warning("failed to open connection to any of the discovered serial devices: %s", *["\n  - {}".format(self.device_info(p)) for p in portlist])
                     #  logger.debug(p.device, p.name, p.description, p.hwid, p.vid, p.pid, p.serial_number, p.location, p.manufacturer, p.product, p.interface)
             self._activate_emulator_mode()
+        else:
+            self.start_signal_handler()
         return
 
     @property
@@ -88,24 +114,58 @@ class HWSOC(Borg):
     @nleaflets.setter
     def nleaflets(self, val):
         self._nleaflets = val
+######################################
+    def send_structured_signal(self, pre_bytes, payload):
+        full_payload = self.MAGIC_BYTES + pre_bytes + payload
+        if self.recvsighandler:
+            self.recvsighandler.write(full_payload)
+        else:
+            self._fserial.write(full_payload)
+            self._fserial.reset_input_buffer()
 
+    def is_valid_idx(self, idx):
+        return idx<self.nleaflets and idx>=0
+
+    def start_signal_handler(self):
+        self.recvsighandler = ReaderThread(self._fserial, RecvSignalHandler)
+        self.recvsighandler.start()
+
+    def stop_signal_handler(self):
+        self.recvsighandler.join()
+        self.recvsighandler = None
+######################################
+    def send_displacement(self, idx, pos):
+        """send relative displacement for a single leaflet"""
+        if self.EMULATOR_MODE:
+            return
+        if not self.is_valid_idx(idx):
+            raise IndexError('index specified is out of bounds')
+        self.send_structured_signal(self.PRE_RELPOS_ONE, bytes([idx]))
+
+    def send_all_displacements(self, poslist):
+        """send all relative displacements in single bytestring"""
+        if self.EMULATOR_MODE:
+            return
+        if not poslist or len(poslist) != self.nleaflets:
+            raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
+        self.send_structured_signal(self.PRE_RELPOS_all, b''.join([pos.to_bytes(2, byteorder='big', signed=False) for pos in poslist]))
+######################################
     def set_position(self, idx, pos):
         """send extension for a single leaflet"""
         if self.EMULATOR_MODE:
             return
-        if idx >= self.nleaflets or idx < 0:
+        if not self.is_valid_idx(idx):
             raise IndexError('index specified is out of bounds')
-        self._fserial.write(self.MAGIC_BYTES + bytes([idx]) + pos.to_bytes(2, byteorder='big', signed=False) )
-        self._fserial.reset_input_buffer()
+        self.send_structured_signal(self.PRE_ABSPOS_ONE, bytes([idx]) + pos.to_bytes(2, byteorder='big', signed=False))
 
     def set_all_positions(self, poslist):
         """send all leaflet extensions in one bytestring"""
         if self.EMULATOR_MODE:
             return
-        if len(poslist) > self.nleaflets or not poslist:
+        if not poslist or len(poslist) != self.nleaflets:
             raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
-        self._fserial.write(self.MAGIC_BYTES + b''.join([pos.to_bytes(2, byteorder='big', signed=False) for pos in poslist]))
-
+        self.send_structured_signal(self.PRE_ABSPOS_ALL, b''.join([pos.to_bytes(2, byteorder='big', signed=False) for pos in poslist]))
+######################################
     def go_home(self):
         """set to all open leaflets"""
         self.set_all_positions([0]*self.nleaflets)

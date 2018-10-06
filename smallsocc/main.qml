@@ -22,11 +22,11 @@ ApplicationWindow {
   property bool isTreating: false
 
   // prompt a refresh of the SOC display using data from the currently selected SequenceItem
-  // note: this will also prompt a change in HW positions to match display
+  // note: this will also prompt a change in HW positions to match display unless 'false' is passed as argument
   function updateSOCConfig(publishtohw) {
     if (publishtohw === undefined) { publishtohw = true; }
     if (qsequencelist.lvseq.currentIndex < 0 || SequenceListModel.rowCount() <= 0) {
-      soc_display.reset();
+      leaflet_assembly.reset();
     } else {
       var map = {};
       var extarray = SequenceListModel.data(qsequencelist.lvseq.currentIndex, 'extension_list')
@@ -34,12 +34,12 @@ ApplicationWindow {
         for (var i=0; i<extarray.length; ++i) {
           map[i] = extarray[i];
         }
-        soc_display.setExtension(map);
+        leaflet_assembly.setExtension(map);
       }
     }
     // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
     if (publishtohw) {
-      soc_display.onLeafletReleased(-1)
+      leaflet_assembly.onLeafletReleased(-1)
     }
   }
 
@@ -52,14 +52,20 @@ ApplicationWindow {
         PropertyChanges { target: btn_calibrate_accept; visible: false }
         PropertyChanges { target: btn_calibrate_cancel; visible: false }
         PropertyChanges { target: btn_calibrate; visible: true }
+        StateChangeScript {
+          script: leaflet_assembly.enableHWLink();
+        }
       },
       State {
         name: "MODE_CALIBRATE"
         PropertyChanges { target: btn_calibrate; visible: false }
         PropertyChanges { target: btn_calibrate_accept; visible: true }
         PropertyChanges { target: btn_calibrate_cancel; visible: true }
-        PropertyChanges { target: soc_display; preventCollisions: false; limitTravel: false }
+        PropertyChanges { target: leaflet_assembly; preventCollisions: false; limitTravel: false }
         PropertyChanges { target: qsequencelist; enabled:false }
+        StateChangeScript {
+          script: leaflet_assembly.disableHWLink();
+        }
       }
     ]
   }
@@ -69,12 +75,12 @@ ApplicationWindow {
     // deselect items when loading new list and reset display and hw
     SequenceListModel.onModelReset.connect(function() {
       qsequencelist.lvseq.currentIndex = -1;
-      updateSOCConfig();
+      updateSOCConfig(true);
     });
 
     // Keep SOC Display valid on window resize - no HW changes occur
-    mainwindow.onWidthChanged.connect(function() { soc_display.refresh(); });
-    mainwindow.onHeightChanged.connect(function() { soc_display.refresh(); });
+    mainwindow.onWidthChanged.connect(function() { leaflet_assembly.refresh(); });
+    mainwindow.onHeightChanged.connect(function() { leaflet_assembly.refresh(); });
 
     // select nothing and prevent hardware from synchronizing on application launch
     qsequencelist.lvseq.currentIndex = -1;
@@ -105,7 +111,7 @@ ApplicationWindow {
         enabled: !isTreating
 
         QLeafletAssembly { /* Leaflet Display */
-          id: soc_display
+          id: leaflet_assembly
           Layout.fillWidth: true /* dynamically size */
           Layout.preferredHeight: width /* keep square */
           draggable: true
@@ -126,7 +132,7 @@ ApplicationWindow {
           // TODO: DEBUG
           background: QDebugBorder {}
 
-          GridLayout { /* controls under soc_display */
+          GridLayout { /* controls under leaflet_assembly */
             anchors.fill: parent
             columns: 2
 
@@ -148,11 +154,11 @@ ApplicationWindow {
               Layout.row: 0
               editable: true
               from: 0
-              to: soc_display.nleaflets-1
+              to: leaflet_assembly.nleaflets-1
               value: from
               Component.onCompleted: {
                 // change spinbox value when leaflet is clicked
-                soc_display.onLeafletPressed.connect(function(index) { value = index; });
+                leaflet_assembly.onLeafletPressed.connect(function(index) { value = index; });
               }
             }
             SpinBox {
@@ -161,12 +167,12 @@ ApplicationWindow {
               Layout.row: 1
               editable: true
               from: 0
-              to: soc_display.leaflets[leaflet_spinbox.value].max_safe_extension
-              value: soc_display.leaflets[leaflet_spinbox.value].extension
+              to: leaflet_assembly.leaflets[leaflet_spinbox.value].max_safe_extension
+              value: leaflet_assembly.leaflets[leaflet_spinbox.value].extension
               onValueModified: {
-                soc_display.setExtension(leaflet_spinbox.value, value)
+                leaflet_assembly.setExtension(leaflet_spinbox.value, value)
                 // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
-                soc_display.onLeafletReleased(leaflet_spinbox.value)
+                leaflet_assembly.onLeafletReleased(leaflet_spinbox.value)
               }
             }
             Button { /* Save SequenceItem to ListModel */
@@ -174,7 +180,7 @@ ApplicationWindow {
               Layout.fillWidth: true
               text: "Save Leaflet Configuration"
               onClicked: {
-                var extmap = soc_display.getExtension();
+                var extmap = leaflet_assembly.getExtension();
                 if (qsequencelist.lvseq.currentItem == null) {
                   // if no item is selected, insert new item at end of model and save leaflet config to it
                   SequenceListModel.insertRows()
@@ -227,6 +233,14 @@ ApplicationWindow {
               borderwidth: 0
               text: "Accept Calibration"
               onClicked: {
+                // send displacements to hw
+                var extmap = leaflet_assembly.getExtension();
+                extmap.forEach(function(v, k, m){
+
+                  console.debug('extension: '+k+ ' -> '+v);
+                });
+
+                leaflet_assembly.reset()
                 footer_status.text = "Calibration Accepted";
                 app_state.state = "MODE_NORMAL"
               }
@@ -248,7 +262,7 @@ ApplicationWindow {
             }
 
             //DEBUG
-            GridLayout { /* controls under soc_display */
+            GridLayout { /* controls under leaflet_assembly */
               // anchors.fill: parent
               columns: 2
               visible: debug_mode

@@ -95,7 +95,7 @@ def start_gui():
             # SAMPLE ITEMS FOR DEBUG
             from sequence import SequenceItem, SequenceItemType
             sample_sequenceitems = [
-                SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=0, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
+                SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=1000, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
                 SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
                 SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=3000, description="descriptive text3"),
                 SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=4500, description="descriptive text4"),

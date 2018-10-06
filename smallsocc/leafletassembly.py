@@ -19,6 +19,7 @@ class LeafletAssembly(QQuickItem):
         QQuickItem.__init__(self, parent)
         self._leaflets = []
         self._hwsoc = HWSOC()
+        self.hw_linked = False
 
     def componentComplete(self):
         QQuickItem.componentComplete(self)
@@ -37,11 +38,15 @@ class LeafletAssembly(QQuickItem):
 
     @pyqtSlot()
     def enableHWLink(self):
-        self.onLeafletReleased.connect(self.publishToHW)
+        if not self.hw_linked:
+            self.onLeafletReleased.connect(self.publishToHW)
+            self.hw_linked = True
 
     @pyqtSlot()
     def disableHWLink(self):
-        self.onLeafletReleased.disconnect(self.publishToHW)
+        if self.hw_linked:
+            self.onLeafletReleased.disconnect(self.publishToHW)
+            self.hw_linked = False
 
 # make accessible to qml
 qmlRegisterType(LeafletAssembly, 'com.soc.types.LeafletAssemblies', 1, 0, 'LeafletAssembly')
