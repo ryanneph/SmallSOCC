@@ -1,8 +1,6 @@
 #include <Adafruit_CircuitPlayground.h>
 #include <math.h>
 
-#define DEBUG_PRINT
-
 #define MAGIC1 0xFF
 #define MAGIC2 0xD7
 #define PRE_ABSPOS_ONE 0xB1
@@ -29,15 +27,15 @@ void setup() {
     }
 
     CircuitPlayground.clearPixels();
-    for (int i=0; i<8; i++) {
-        CircuitPlayground.setPixelColor(i, 0, 0, 30);
+    for (int i=0; i<9; i++) {
+        CircuitPlayground.setPixelColor(i+1, 0, 0, 30);
         delay(100);
     }
 }
 
-int normalize(uint16_t x, int l=0, int h=800) {
+uint8_t normalize(int x, int l=0, int h=800) {
     /* convert range from [l,h] to [0,256) */
-    return min(255, max(0, floor((x-l)*255/(h-l))));
+    return min(255, max(0, floor((x-l)*255.0/(h-l))));
 }
 
 void loop() {
@@ -50,40 +48,43 @@ void loop() {
    *     echo -en "\xFF\xD7\x02\x00\x7F" > /dev/ttyACM0
    */
 
-    unsigned char buf[16];
-    uint16_t state[8] = {0};
-    uint8_t       leaflet;
-    uint16_t      pos;
-    if (Serial.readBytes(buf, 2) && buf[0] == MAGIC1 && buf[1] == MAGIC2) {
-        unsigned char mode;
-        Serial.readBytes(&mode, 1);
-        switch (mode) {
-            case PRE_ABSPOS_ONE:
-                Serial.readBytes(buf, 3);
-                leaflet = (uint8_t)buf[0];
-                pos     = (uint16_t)( (buf[1]<<8)|(buf[2]) );
-                pos = normalize(pos);
-                if (state[leaflet] != pos) {
-                    CircuitPlayground.setPixelColor(leaflet, pos, 0, 30);
-                    state[leaflet] = pos;
-                }
-                break;
+    byte buf[16];
+    byte mode;
 
-            case PRE_ABSPOS_ALL:
-                Serial.readBytes(buf, 16);
+    // leaf motion commands
+    uint8_t leaflet;
+    int16_t pos;
+    if (Serial.read() == MAGIC1 && Serial.read() == MAGIC2) {
+        mode = Serial.read();
+        if (mode == PRE_ABSPOS_ALL) {
+            if (Serial.readBytes(buf, 16)) {
                 for (int ii=0; ii<8; ii++) {
-                    pos = (uint16_t)( (buf[ii*2]<<8)|(buf[ii*2+1]) );
-                    pos = normalize(pos);
-                    if (state[ii] != pos) {
-                        CircuitPlayground.setPixelColor(ii, pos, 0, 30);
-                        state[ii] = pos;
-                    }
-                }
-                break;
-            default:
-                break;
-        }
+                    pos = (int16_t(buf[ii*2])<<8)|int16_t(buf[ii*2+1]);
+                    uint8_t upos = normalize(pos);
+                    CircuitPlayground.setPixelColor(ii+1, upos, 0, 30);
 
+                    /* Serial.print("leaflet "); */
+                    /* Serial.print(ii); */
+                    /* Serial.print(" | pos "); */
+                    /* Serial.println(upos); */
+                    /* Serial.println(""); */
+                }
+            }
+        } else if (mode == PRE_ABSPOS_ONE) {
+            if (Serial.readBytes(buf, 3)) {
+                leaflet = buf[0];
+                pos = (int16_t(buf[1])<<8)|int16_t(buf[2]);
+                /* Serial.println(pos, BIN); */
+                uint8_t upos = normalize(pos, 0, 255);
+                /* Serial.println(upos, BIN); */
+                /* Serial.println(""); */
+
+                CircuitPlayground.setPixelColor(leaflet+1, upos, 0, 30);
+                /* Serial.print("leaflet "); */
+                /* Serial.print(leaflet); */
+                /* Serial.print(" | pos "); */
+                /* Serial.println(upos); */
+            }
+        }
     }
 }
-

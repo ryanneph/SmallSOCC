@@ -13,9 +13,9 @@ class RecvSignalHandler(Protocol):
 
     def connection_made(self, transport):
         logger.debug2("began threaded serial read-loop")
-        pass
 
     def data_recieved(self, data):
+        logger.debug("recv")
         if data:
             logger.debug(str(data))
 
@@ -105,6 +105,7 @@ class HWSOC(Borg):
             self._activate_emulator_mode()
         else:
             self.start_signal_handler()
+            self.go_home()
         return
 
     @property
@@ -116,6 +117,7 @@ class HWSOC(Borg):
         self._nleaflets = val
 ######################################
     def send_structured_signal(self, pre_bytes, payload):
+        print(pre_bytes)
         full_payload = self.MAGIC_BYTES + pre_bytes + payload
         if self.recvsighandler:
             self.recvsighandler.write(full_payload)
@@ -148,7 +150,7 @@ class HWSOC(Borg):
             return
         if not poslist or len(poslist) != self.nleaflets:
             raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
-        self.send_structured_signal(self.PRE_RELPOS_all, b''.join([pos.to_bytes(2, byteorder='big', signed=False) for pos in poslist]))
+        self.send_structured_signal(self.PRE_RELPOS_all, b''.join([pos.to_bytes(2, byteorder='big', signed=True) for pos in poslist]))
 ######################################
     def set_position(self, idx, pos):
         """send extension for a single leaflet"""
@@ -156,7 +158,7 @@ class HWSOC(Borg):
             return
         if not self.is_valid_idx(idx):
             raise IndexError('index specified is out of bounds')
-        self.send_structured_signal(self.PRE_ABSPOS_ONE, bytes([idx]) + pos.to_bytes(2, byteorder='big', signed=False))
+        self.send_structured_signal(self.PRE_ABSPOS_ONE, bytes([idx]) + pos.to_bytes(2, byteorder='big', signed=True))
 
     def set_all_positions(self, poslist):
         """send all leaflet extensions in one bytestring"""
@@ -164,7 +166,7 @@ class HWSOC(Borg):
             return
         if not poslist or len(poslist) != self.nleaflets:
             raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
-        self.send_structured_signal(self.PRE_ABSPOS_ALL, b''.join([pos.to_bytes(2, byteorder='big', signed=False) for pos in poslist]))
+        self.send_structured_signal(self.PRE_ABSPOS_ALL, b''.join([pos.to_bytes(2, byteorder='big', signed=True) for pos in poslist]))
 ######################################
     def go_home(self):
         """set to all open leaflets"""
