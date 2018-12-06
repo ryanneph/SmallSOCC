@@ -12,27 +12,27 @@ class RecvSignalHandler(Protocol):
         super().__init__()
 
     def connection_made(self, transport):
-        logger.debug2("began threaded serial read-loop")
+        logger.debug("began threaded serial read-loop")
 
-    def data_recieved(self, data):
-        logger.debug("recv")
-        if data:
-            logger.debug(str(data))
-
-    def connection_lost(self, exc):
-        if exc:
-            logger.debug2("lost connection to serial interface")
-            raise exc
+    def data_received(self, data):
+        # only process freshest signal if more are buffered
+        if bytes([data[-1]]) == HWSOC.SIG_MOVE_OK:
+            logger.debug2("Recv: SIGNAL:MOVE_OK")
+        if bytes([data[-1]]) == HWSOC.SIG_HWERROR:
+            logger.warning("Recv: SIGNAL:HWERROR")
+            #TODO: Signal to GUI that an error has occured
 
 
 class HWSOC(Borg):
     """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
     _shared_state = {}
-    MAGIC_BYTES = bytes([ 0xFF, 0xD7 ])
-    PRE_ABSPOS_ONE = bytes([ 0xB1 ])
-    PRE_ABSPOS_ALL = bytes([ 0xB2 ])
-    PRE_RELPOS_ONE = bytes([ 0xC1 ])
-    PRE_RELPOS_ALL = bytes([ 0xC2 ])
+    MAGIC_BYTES    = b'\xFF\xD7'
+    PRE_ABSPOS_ONE = b'\xB1'
+    PRE_ABSPOS_ALL = b'\xB2'
+    PRE_RELPOS_ONE = b'\xC1'
+    PRE_RELPOS_ALL = b'\xC2'
+    SIG_MOVE_OK    = b'\x50'
+    SIG_HWERROR    = b'\x51'
 
     def __init__(self, nleaflets=None, HID=None, BAUD=115200):
         """
@@ -117,7 +117,6 @@ class HWSOC(Borg):
         self._nleaflets = val
 ######################################
     def send_structured_signal(self, pre_bytes, payload):
-        print(pre_bytes)
         full_payload = self.MAGIC_BYTES + pre_bytes + payload
         if self.recvsighandler:
             self.recvsighandler.write(full_payload)
@@ -128,6 +127,11 @@ class HWSOC(Borg):
     def is_valid_idx(self, idx):
         return idx<self.nleaflets and idx>=0
 
+    def connection_lost(self, exc):
+        if exc:
+            logger.debug1("lost connection to serial interface")
+            raise exc
+
     def start_signal_handler(self):
         self.recvsighandler = ReaderThread(self._fserial, RecvSignalHandler)
         self.recvsighandler.start()
@@ -136,21 +140,21 @@ class HWSOC(Borg):
         self.recvsighandler.join()
         self.recvsighandler = None
 ######################################
-    def send_displacement(self, idx, pos):
-        """send relative displacement for a single leaflet"""
-        if self.EMULATOR_MODE:
-            return
-        if not self.is_valid_idx(idx):
-            raise IndexError('index specified is out of bounds')
-        self.send_structured_signal(self.PRE_RELPOS_ONE, bytes([idx]))
+    #  def send_displacement(self, idx, pos):
+    #      """send relative displacement for a single leaflet"""
+    #      if self.EMULATOR_MODE:
+    #          return
+    #      if not self.is_valid_idx(idx):
+    #          raise IndexError('index specified is out of bounds')
+    #      self.send_structured_signal(self.PRE_RELPOS_ONE, bytes([idx]))
 
-    def send_all_displacements(self, poslist):
-        """send all relative displacements in single bytestring"""
-        if self.EMULATOR_MODE:
-            return
-        if not poslist or len(poslist) != self.nleaflets:
-            raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
-        self.send_structured_signal(self.PRE_RELPOS_all, b''.join([pos.to_bytes(2, byteorder='big', signed=True) for pos in poslist]))
+    #  def send_all_displacements(self, poslist):
+    #      """send all relative displacements in single bytestring"""
+    #      if self.EMULATOR_MODE:
+    #          return
+    #      if not poslist or len(poslist) != self.nleaflets:
+    #          raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
+    #      self.send_structured_signal(self.PRE_RELPOS_all, b''.join([pos.to_bytes(2, byteorder='big', signed=True) for pos in poslist]))
 ######################################
     def set_position(self, idx, pos):
         """send extension for a single leaflet"""

@@ -8,6 +8,11 @@
 #define PRE_RELPOS_ONE 0xC1
 #define PRE_RELPOS_ALL 0xC2
 
+#define SIG_MOVE_OK    0x50
+#define SIG_HWERROR    0x51
+
+int time_to_error = 5;
+
 void setup() {
     Serial.begin(115200);
     CircuitPlayground.begin();
@@ -38,6 +43,14 @@ uint8_t normalize(int x, int l=0, int h=800) {
     return min(255, max(0, floor((x-l)*255.0/(h-l))));
 }
 
+void move_leaf(int i, int ext) {
+    if (ext < 0) {
+        Serial.write(byte(SIG_HWERROR));
+        return;
+    }
+    CircuitPlayground.setPixelColor(i+1, ext, 0, 30);
+}
+
 void loop() {
   /* Serial Communication Mini-language
    * to set leaflet position, send magic 2-bytes 0xFF 0xD7 followed by
@@ -61,13 +74,20 @@ void loop() {
                 for (int ii=0; ii<8; ii++) {
                     pos = (int16_t(buf[ii*2])<<8)|int16_t(buf[ii*2+1]);
                     uint8_t upos = normalize(pos);
-                    CircuitPlayground.setPixelColor(ii+1, upos, 0, 30);
+                    move_leaf(ii+1, upos);
 
                     /* Serial.print("leaflet "); */
                     /* Serial.print(ii); */
                     /* Serial.print(" | pos "); */
                     /* Serial.println(upos); */
                     /* Serial.println(""); */
+                }
+                if (--time_to_error <= 0) {
+                    // emulate a hardware error
+                    time_to_error = 5;
+                    Serial.write(byte(SIG_HWERROR));
+                } else {
+                    Serial.write(byte(SIG_MOVE_OK));
                 }
             }
         } else if (mode == PRE_ABSPOS_ONE) {
@@ -79,11 +99,13 @@ void loop() {
                 /* Serial.println(upos, BIN); */
                 /* Serial.println(""); */
 
-                CircuitPlayground.setPixelColor(leaflet+1, upos, 0, 30);
+                move_leaf(leaflet+1, upos);
                 /* Serial.print("leaflet "); */
                 /* Serial.print(leaflet); */
                 /* Serial.print(" | pos "); */
                 /* Serial.println(upos); */
+
+                Serial.write(byte(SIG_MOVE_OK));
             }
         }
     }

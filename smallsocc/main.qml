@@ -53,7 +53,7 @@ ApplicationWindow {
         PropertyChanges { target: btn_calibrate_cancel; visible: false }
         PropertyChanges { target: btn_calibrate; visible: true }
         StateChangeScript {
-          script: leaflet_assembly.enableHWLink();
+          // script: leaflet_assembly.enableHWLink();
         }
       },
       State {
@@ -64,7 +64,7 @@ ApplicationWindow {
         PropertyChanges { target: leaflet_assembly; preventCollisions: false; limitTravel: false }
         PropertyChanges { target: qsequencelist; enabled:false }
         StateChangeScript {
-          script: leaflet_assembly.disableHWLink();
+          // script: leaflet_assembly.disableHWLink();
         }
       }
     ]
