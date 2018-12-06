@@ -39,7 +39,7 @@ ApplicationWindow {
     }
     // TODO: KLUDGE should better differentiate signals from assembly update vs leaflet update
     if (publishtohw) {
-      leaflet_assembly.onLeafletReleased(-1)
+      leaflet_assembly.publishToHW()
     }
   }
 
@@ -51,6 +51,7 @@ ApplicationWindow {
         name: "MODE_NORMAL"
         PropertyChanges { target: btn_calibrate_accept; visible: false }
         PropertyChanges { target: btn_calibrate_cancel; visible: false }
+        PropertyChanges { target: btn_calibrate_reset; visible: false }
         PropertyChanges { target: btn_calibrate; visible: true }
         StateChangeScript {
           // script: leaflet_assembly.enableHWLink();
@@ -61,6 +62,7 @@ ApplicationWindow {
         PropertyChanges { target: btn_calibrate; visible: false }
         PropertyChanges { target: btn_calibrate_accept; visible: true }
         PropertyChanges { target: btn_calibrate_cancel; visible: true }
+        PropertyChanges { target: btn_calibrate_reset; visible: true }
         PropertyChanges { target: leaflet_assembly; preventCollisions: false; limitTravel: false }
         PropertyChanges { target: qsequencelist; enabled:false }
         StateChangeScript {
@@ -166,7 +168,7 @@ ApplicationWindow {
               Layout.column: 1
               Layout.row: 1
               editable: true
-              from: 0
+              from: leaflet_assembly.leaflets[leaflet_spinbox.value].min_safe_extension
               to: leaflet_assembly.leaflets[leaflet_spinbox.value].max_safe_extension
               value: leaflet_assembly.leaflets[leaflet_spinbox.value].extension
               onValueModified: {
@@ -206,58 +208,68 @@ ApplicationWindow {
                 footer_status.text = 'Leaflet configuration reset';
               }
             }
-            QStylizedButton { /* Start/Accept Calibration */
-              id: btn_calibrate
-              // Layout.topMargin: 20
+            RowLayout {
               Layout.row: 3
-              Layout.column: 0
               Layout.columnSpan: 2
               Layout.fillWidth: true
-              borderwidth: 0
-              textcolor: '#333'
-              bgcolor: '#ddd'
-              text: "Calibrate Leaflet Positions"
-              onClicked: {
-                footer_status.text = 'Begin Calibration';
-                app_state.state = "MODE_CALIBRATE"
-              }
-            }
-            QStylizedButton { /* Start Calibration */
-              id: btn_calibrate_accept
-              // Layout.topMargin: 20
-              Layout.row: 3
-              Layout.column: 0
-              Layout.fillWidth: true
-              visible: false
-              bgcolor: "#37ee44"
-              borderwidth: 0
-              text: "Accept Calibration"
-              onClicked: {
-                // send displacements to hw
-                var extmap = leaflet_assembly.getExtension();
-                extmap.forEach(function(v, k, m){
 
-                  console.debug('extension: '+k+ ' -> '+v);
-                });
 
-                leaflet_assembly.reset()
-                footer_status.text = "Calibration Accepted";
-                app_state.state = "MODE_NORMAL"
+              QStylizedButton { /* Start/Accept Calibration */
+                id: btn_calibrate
+                Layout.fillWidth: true
+                borderwidth: 0
+                textcolor: '#333'
+                bgcolor: '#ddd'
+                text: "Calibrate Leaflet Positions"
+                onClicked: {
+                  leaflet_assembly.setOpened()
+                  footer_status.text = 'Begin Calibration';
+                  app_state.state = "MODE_CALIBRATE"
+                }
               }
-            }
-            QStylizedButton { /* Start Calibration */
-              id: btn_calibrate_cancel
-              // Layout.topMargin: 20
-              Layout.row: 3
-              Layout.column: 1
-              Layout.fillWidth: true
-              visible: false
-              bgcolor: "#ff4f4f"
-              borderwidth: 0
-              text: "Cancel Calibration"
-              onClicked: {
-                footer_status.text = "Calibration Cancelled";
-                app_state.state = "MODE_NORMAL"
+              QStylizedButton { /* Start Calibration */
+                id: btn_calibrate_accept
+                visible: false
+                Layout.fillWidth: true
+                bgcolor: "#37ee44"
+                borderwidth: 0
+                text: "Accept Calibration"
+                onClicked: {
+                  var extmap = leaflet_assembly.getExtension();
+                  leaflet_assembly.setOffsets(extmap)
+                  updateSOCConfig()
+                  footer_status.text = "Calibration Accepted";
+                  app_state.state = "MODE_NORMAL"
+                }
+              }
+              QStylizedButton { /* Start Calibration */
+                id: btn_calibrate_cancel
+                visible: false
+                Layout.fillWidth: true
+                textcolor: '#333'
+                bgcolor: '#ddd'
+                borderwidth: 0
+                text: "Cancel Calibration"
+                onClicked: {
+                  updateSOCConfig()
+                  footer_status.text = "Calibration Cancelled";
+                  app_state.state = "MODE_NORMAL"
+                }
+              }
+              QStylizedButton { /* Reset Calibration */
+                id: btn_calibrate_reset
+                // Layout.topMargin: 20
+                Layout.preferredWidth: 50
+                visible: false
+                bgcolor: "#ff4f4f"
+                borderwidth: 0
+                text: "Reset"
+                onClicked: {
+                  leaflet_assembly.resetOffsets();
+                  updateSOCConfig()
+                  footer_status.text = "Calibration Reset";
+                  app_state.state = "MODE_NORMAL"
+                }
               }
             }
 

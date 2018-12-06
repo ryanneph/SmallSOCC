@@ -37,12 +37,14 @@ class Leaflet(QQuickItem):
 
     onExtensionChanged = pyqtSignal([int], arguments=['extension'])
     onIndexChanged     = pyqtSignal([int], arguments=['index'])
+    onLimitTravelChanged = pyqtSignal([bool])
 
     def __init__(self, *args, **kwargs):
         QQuickItem.__init__(self, **kwargs)
         self._hwsoc = HWSOC()
         self._extension = 0
         self._index = Leaflet.next_available
+        self._limit_travel = True
         Leaflet.next_available += 1
 
     def componentComplete(self):
@@ -66,6 +68,15 @@ class Leaflet(QQuickItem):
     def max_extension(self):
         return Leaflet._max_ext
 
+    @pyqtProperty(bool, notify=onLimitTravelChanged)
+    def limitTravel(self):
+        return self._limit_travel
+
+    @limitTravel.setter
+    def limitTravel(self, val):
+        self._limit_travel = bool(val)
+        self.onLimitTravelChanged.emit(self._limit_travel)
+
     @pyqtProperty(int, notify=onExtensionChanged)
     def extension(self):
         return self._extension
@@ -73,23 +84,12 @@ class Leaflet(QQuickItem):
     @extension.setter
     def extension(self, val):
         # bounds checking
-        if (val < Leaflet._min_ext): val = Leaflet._min_ext
-        elif (val > Leaflet._max_ext): val = Leaflet._max_ext
+        if self.limitTravel:
+            if (val < self._min_ext): val = self._min_ext
+            elif (val > self._max_ext): val = self._max_ext
         self._extension = val
         self.onExtensionChanged.emit(val)
 
-    #  def publishToHW(self, val):
-    #      logger.debug('publishing to HW - leaflet #{:d} ext: {:d}'.format(self.index, val))
-    #      self._hwsoc.set_position(self.index, self.extension)
-    #      pass
-
-    #  @pyqtSlot()
-    #  def enableHWLink(self):
-    #      self.onExtensionChanged.connect(self.publishToHW)
-
-    #  @pyqtSlot()
-    #  def disableHWLink(self):
-    #      self.onExtensionChanged.disconnect(self.publishToHW)
 
 # make Leaflet accessible to qml
 qmlRegisterType(Leaflet, 'com.soc.types.Leaflets', 1, 0, 'Leaflet')

@@ -25,7 +25,6 @@ class RecvSignalHandler(Protocol):
 
 class HWSOC(Borg):
     """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
-    _shared_state = {}
     MAGIC_BYTES    = b'\xFF\xD7'
     PRE_ABSPOS_ONE = b'\xB1'
     PRE_ABSPOS_ALL = b'\xB2'
@@ -41,15 +40,18 @@ class HWSOC(Borg):
             BAUD (int): Serial baud rate - must match serial device baud exactly
         """
         Borg.__init__(self)
-        if '_fserial' in self.__dict__:
+        if self.__dict__.get('initialized', False):
             return
 
+        self.initialized = False
         self._fserial = None
         self.recvsighandler = None
         self.EMULATOR_MODE = False
         self._USB_HID=HID
         self._BAUD = BAUD
-        self._nleaflets = nleaflets
+        self.cal_offsets = [0]*nleaflets
+        self.nleaflets = nleaflets
+
         self._init_hw()
 
     def _activate_emulator_mode(self):
@@ -66,8 +68,7 @@ class HWSOC(Borg):
         )
 
     def _init_hw(self):
-        if self.EMULATOR_MODE or self._fserial:
-            # no need to reinit
+        if self.initialized:
             return
 
         portlist = []
@@ -105,16 +106,11 @@ class HWSOC(Borg):
             self._activate_emulator_mode()
         else:
             self.start_signal_handler()
-            self.go_home()
+            # set to all open leaflets
+            self.set_all_positions([0]*self.nleaflets)
+        self.initialized = True
         return
 
-    @property
-    def nleaflets(self):
-        return self._nleaflets
-
-    @nleaflets.setter
-    def nleaflets(self, val):
-        self._nleaflets = val
 ######################################
     def send_structured_signal(self, pre_bytes, payload):
         full_payload = self.MAGIC_BYTES + pre_bytes + payload
@@ -162,6 +158,7 @@ class HWSOC(Borg):
             return
         if not self.is_valid_idx(idx):
             raise IndexError('index specified is out of bounds')
+        pos += self.cal_offsets[idx]
         self.send_structured_signal(self.PRE_ABSPOS_ONE, bytes([idx]) + pos.to_bytes(2, byteorder='big', signed=True))
 
     def set_all_positions(self, poslist):
@@ -170,11 +167,9 @@ class HWSOC(Borg):
             return
         if not poslist or len(poslist) != self.nleaflets:
             raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
+        poslist = [x + self.cal_offsets[ii] for ii, x in enumerate(poslist)]
         self.send_structured_signal(self.PRE_ABSPOS_ALL, b''.join([pos.to_bytes(2, byteorder='big', signed=True) for pos in poslist]))
 ######################################
-    def go_home(self):
-        """set to all open leaflets"""
-        self.set_all_positions([0]*self.nleaflets)
 
     def get_position(self, idx):
         raise NotImplementedError('Feedback mechanism not yet implemented in hardware')

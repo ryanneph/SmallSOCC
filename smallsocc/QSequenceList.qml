@@ -228,6 +228,8 @@ RowLayout {
           if (lvseq.currentIndex == -1 || lvseq.currentIndex >= (SequenceListModel.size-1)) {
             stop()
             if (running == false) {
+              lvseq.currentIndex = -1
+              leaflet_assembly.setClosed()
               footer_status.text = "Treatment finished"
               var d = DynamicQML.createDynamicObject(mainwindow, "QMessageDialog.qml", {
                 'title': 'Treatment Completed',

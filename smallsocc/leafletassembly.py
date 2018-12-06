@@ -31,10 +31,13 @@ class LeafletAssembly(QQuickItem):
     def leaflets(self):
         return QQmlListProperty(Leaflet, self, self._leaflets)
 
+    @pyqtSlot()
+    @pyqtSlot(int)
     def publishToHW(self, index=None):
         poslist = [lf.extension for lf in self._leaflets]
         logger.debug('publishing all to HW - [{}]'.format(', '.join(str(x) for x in poslist)))
         self._hwsoc.set_all_positions(poslist)
+
 
     @pyqtSlot()
     def enableHWLink(self):
@@ -47,6 +50,36 @@ class LeafletAssembly(QQuickItem):
         if self.hw_linked:
             self.onLeafletReleased.disconnect(self.publishToHW)
             self.hw_linked = False
+
+    @pyqtSlot()
+    def resetOffsets(self):
+        """zeros the calibration offsets"""
+        self._hwsoc.cal_offsets = [0]*len(self._leaflets)
+        logger.debug('New HW offsets: '+str(self._hwsoc.cal_offsets))
+
+    @pyqtSlot(list)
+    def setOffsets(self, offsets:list):
+        """Set calibration offsets to be added to each leaf extension before sending to HW"""
+        if len(offsets) != self._hwsoc.nleaflets:
+            raise RuntimeError("length of Calibration offsets list must be equal to the number of leaflets managed")
+        for ii, o in enumerate(offsets):
+            self._hwsoc.cal_offsets[ii] += o
+        logger.debug('New HW offsets: '+str(self._hwsoc.cal_offsets))
+
+    # pre-defined leaflet configurations
+    @pyqtSlot()
+    def setClosed(self):
+        """Move leaflets to 'closed' position"""
+        for ii, leaf in enumerate(self._leaflets):
+                leaf.extension = leaf.max_extension if ii<4 else 0
+        self.publishToHW()
+
+    @pyqtSlot()
+    def setOpened(self):
+        """Move leaflets to 'closed' position"""
+        for ii, leaf in enumerate(self._leaflets):
+                leaf.extension = 0
+        self.publishToHW()
 
 # make accessible to qml
 qmlRegisterType(LeafletAssembly, 'com.soc.types.LeafletAssemblies', 1, 0, 'LeafletAssembly')

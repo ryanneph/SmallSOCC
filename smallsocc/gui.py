@@ -85,6 +85,8 @@ def start_gui():
     # initialize logger
     soclog.init_logging(level=logging._nameToLevel.get(args.loglevel, None), config_path=args.logconf)
 
+    HWSOC(8, HID=None) # init singleton instance for controlling hardware
+
     listmodel = sequence.SequenceListModel()
     if args.loglevel is not 'NOTSET' and logging._nameToLevel[args.loglevel] <= logging.DEBUG:
         # load example sequence, for rapid debugging
@@ -103,7 +105,6 @@ def start_gui():
             listmodel = sequence.SequenceListModel(elements=sample_sequenceitems)
 
 
-    HWSOC(8, HID=None) # init singleton instance for controlling hardware
 
     # integrate qml logging with python logging
     QtCore.qInstallMessageHandler(qt_message_handler)

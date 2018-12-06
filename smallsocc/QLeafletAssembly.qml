@@ -121,6 +121,7 @@ LeafletAssembly {
     full_range: beambounds.width
     draggable: root.draggable
     preventCollisions: root.preventCollisions
+    limitTravel: root.limitTravel
     compext: (l5.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
@@ -138,6 +139,7 @@ LeafletAssembly {
     full_range: beambounds.width
     draggable: root.draggable
     preventCollisions: root.preventCollisions
+    limitTravel: root.limitTravel
     compext: (l4.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
@@ -155,6 +157,7 @@ LeafletAssembly {
     full_range: beambounds.height
     draggable: root.draggable
     preventCollisions: root.preventCollisions
+    limitTravel: root.limitTravel
     compext: (l7.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
@@ -172,6 +175,7 @@ LeafletAssembly {
     full_range: beambounds.height
     draggable: root.draggable
     preventCollisions: root.preventCollisions
+    limitTravel: root.limitTravel
     compext: (l6.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
@@ -189,6 +193,7 @@ LeafletAssembly {
     full_range: beambounds.width
     draggable: root.draggable
     preventCollisions: root.preventCollisions
+    limitTravel: root.limitTravel
     compext: (l1.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
@@ -206,6 +211,7 @@ LeafletAssembly {
     full_range: beambounds.width
     draggable: root.draggable
     preventCollisions: root.preventCollisions
+    limitTravel: root.limitTravel
     compext: (l0.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
@@ -223,6 +229,7 @@ LeafletAssembly {
     full_range: beambounds.height
     draggable: root.draggable
     preventCollisions: root.preventCollisions
+    limitTravel: root.limitTravel
     compext: (l3.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
@@ -240,6 +247,7 @@ LeafletAssembly {
     full_range: beambounds.height
     draggable: root.draggable
     preventCollisions: root.preventCollisions
+    limitTravel: root.limitTravel
     compext: (l2.extension+root.collision_buffer)
     color_leaf: root.color_leaf
     color_stem: root.color_stem
