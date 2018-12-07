@@ -243,8 +243,9 @@ ApplicationWindow {
                 id: btn_calibrate_cancel
                 visible: false
                 Layout.fillWidth: true
-                textcolor: '#333'
-                bgcolor: '#ddd'
+                // textcolor: '#333'
+                // bgcolor: '#ddd'
+                bgcolor: "#ff4f4f"
                 borderwidth: 0
                 text: "Cancel Calibration"
                 onClicked: {

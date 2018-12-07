@@ -151,6 +151,8 @@ class HWSOC(Borg):
 
 ######################################
     def send_structured_signal(self, pre_bytes, payload):
+        if self.EMULATOR_MODE:
+            return
         full_payload = self.MAGIC_BYTES + pre_bytes + payload
         if self.recvsighandler:
             self.recvsighandler.write(full_payload)
@@ -176,16 +178,12 @@ class HWSOC(Borg):
 ######################################
     def set_position(self, idx, pos):
         """send extension for a single leaflet"""
-        if self.EMULATOR_MODE:
-            return
         if not self.is_valid_idx(idx):
             raise IndexError('index specified is out of bounds')
         self.send_structured_signal(self.PRE_ABSPOS_ONE, bytes([idx]) + pos.to_bytes(2, byteorder='big', signed=True))
 
     def set_all_positions(self, poslist):
         """send all leaflet extensions in one bytestring"""
-        if self.EMULATOR_MODE:
-            return
         if not poslist or len(poslist) != self.nleaflets:
             raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
         self.send_structured_signal(self.PRE_ABSPOS_ALL, b''.join([pos.to_bytes(2, byteorder='big', signed=True) for pos in poslist]))
