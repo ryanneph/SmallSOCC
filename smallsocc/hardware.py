@@ -11,25 +11,57 @@ logger = logging.getLogger(__name__)
 class RecvSignalHandler(Protocol):
     def __init__(self):
         super().__init__()
+        self._buf = b''
 
     def connection_made(self, transport):
         logger.debug("began threaded serial read-loop")
 
+    def split_bytes(self, data):
+        """split at '\n' or b'\x00' and return list of bytes with identifier as string or bytes"""
+        tokens = []
+        idx_null = data.find(b'\x00')
+        idx_nl = data.find(b'\n')
+        if idx_null>=0 and (idx_nl<0 or idx_null<idx_nl):
+            sep = b'\x00'
+        elif idx_nl>=0:
+            sep = b'\n'
+        else:
+            return tokens
+
+        part = data.partition(sep)
+        tokens.append((part[1], part[0]))
+        if len(part[2]):
+            tokens += self.split_bytes(part[2])
+
+        return tokens
+
     def data_received(self, data):
         # only process freshest signal if more are buffered
-        if bytes([data[-1]]) == HWSOC.SIG_MOVE_OK:
-            logger.monitor("Recv: SIGNAL:MOVE_OK")
-        elif bytes([data[-1]]) == HWSOC.SIG_HWERROR:
-            logger.monitor("Recv: SIGNAL:HWERROR")
-            #TODO: Signal to GUI that an error has occured
-        else:
-            for d in data.split('\n'.encode()):
-                try:
-                    str_rep = d.decode('utf-8').rstrip('\r\n')
-                    logger.monitor("Recv (text): \"{}\" ({})".format(str_rep, binascii.hexlify(d)))
-                except Exception as e:
-                    logger.monitor("Recv (bin): {}".format(binascii.hexlify(d)))
+        if not (b'\x00' in data or '\n'.encode() in data):
+            self._buf += data
+            return
 
+        data = self._buf + data
+        self._buf = b''
+
+        tokens = self.split_bytes(data)
+
+        for sep, bt in tokens:
+            if sep == b'\x00':
+                if bytes([bt[0]]) == HWSOC.SIG_MOVE_OK:
+                    logger.monitor("Recv: SIGNAL:MOVE_OK")
+                elif bytes([bt[0]]) == HWSOC.SIG_HWERROR:
+                    logger.monitor("Recv: SIGNAL:HWERROR")
+                    #TODO: Signal to GUI that an error has occured
+                else:
+                    logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
+
+            elif sep == b'\n':
+                    try:
+                        str_rep = bt.decode('ascii').rstrip('\r\n')
+                        logger.monitor("Recv (text): \"{}\"".format(str_rep))
+                    except Exception as e:
+                        logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
 
 class HWSOC(Borg):
     """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
@@ -37,8 +69,8 @@ class HWSOC(Borg):
     PRE_ABSPOS_ONE = b'\xB1'     # use before updating a single leaflet position
     PRE_ABSPOS_ALL = b'\xB2'     # use before updating all leaflet positions
     PRE_CALIBRATE  = b'\xB3'     # send without payload to reset HW encoder position state
-    SIG_MOVE_OK    = b'\x50'     # receive from HW after successful leaflet repositioning
-    SIG_HWERROR    = b'\x51'     # receive from HW after error occurs (at any time)
+    SIG_MOVE_OK    = b'\xA0'     # receive from HW after successful leaflet repositioning
+    SIG_HWERROR    = b'\xA1'     # receive from HW after error occurs (at any time)
 
     def __init__(self, nleaflets=None, HID=None, BAUD=115200):
         """

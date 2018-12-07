@@ -3,12 +3,13 @@
 
 #define MAGIC1 0xFF
 #define MAGIC2 0xD7
+
 #define PRE_ABSPOS_ONE 0xB1
 #define PRE_ABSPOS_ALL 0xB2
 #define PRE_CALIBRATE  0xB3
 
-#define SIG_MOVE_OK    0x50
-#define SIG_HWERROR    0x51
+#define SIG_MOVE_OK    0xA0
+#define SIG_HWERROR    0xA1
 
 int time_to_error = 5;
 
@@ -40,6 +41,17 @@ void setup() {
 uint8_t normalize(int x, int l=0, int h=800) {
     /* convert range from [l,h] to [0,256) */
     return min(255, max(0, floor((x-l)*255.0/(h-l))));
+}
+
+void send_signal(byte signal) {
+    byte buf[2] = {signal, 0x00};
+    Serial.write(buf, 2);
+}
+void send_bytes(byte buf[], int len) {
+    byte* b = new byte[len+1] {0x00};
+    memcpy(b, buf, len);
+    b[len] = 0x00;
+    Serial.write(b, len+1);
 }
 
 void move_leaf(int i, int ext) {
@@ -84,9 +96,9 @@ void loop() {
                 if (--time_to_error <= 0) {
                     // emulate a hardware error
                     time_to_error = 5;
-                    Serial.write(byte(SIG_HWERROR));
+                    send_signal(SIG_HWERROR);
                 } else {
-                    Serial.write(byte(SIG_MOVE_OK));
+                    send_signal(SIG_MOVE_OK);
                 }
             }
         } else if (mode == PRE_ABSPOS_ONE) {
@@ -104,11 +116,16 @@ void loop() {
                 /* Serial.print(" | pos "); */
                 /* Serial.println(upos); */
 
-                Serial.write(byte(SIG_MOVE_OK));
+                send_signal(SIG_MOVE_OK);
             }
         } else if (mode == PRE_CALIBRATE) {
             Serial.println("Calibration Signal Received");
-            Serial.write(PRE_CALIBRATE);
+            Serial.println("test1");
+            byte buf[4] = {0xD0, 0xD1, 0xD2, 0xD3};
+            send_bytes(buf, 4);
+            Serial.println("test2");
+            Serial.print("test3");
+            Serial.println(" test4");
         }
     }
 }
