@@ -38,6 +38,9 @@ class LeafletAssembly(QQuickItem):
         logger.debug('publishing all to HW - [{}]'.format(', '.join(str(x) for x in poslist)))
         self._hwsoc.set_all_positions(poslist)
 
+    @pyqtSlot()
+    def setCalibration(self):
+        self._hwsoc.set_calibration()
 
     @pyqtSlot()
     def enableHWLink(self):
@@ -51,20 +54,6 @@ class LeafletAssembly(QQuickItem):
             self.onLeafletReleased.disconnect(self.publishToHW)
             self.hw_linked = False
 
-    @pyqtSlot()
-    def resetOffsets(self):
-        """zeros the calibration offsets"""
-        self._hwsoc.cal_offsets = [0]*len(self._leaflets)
-        logger.debug('New HW offsets: '+str(self._hwsoc.cal_offsets))
-
-    @pyqtSlot(list)
-    def setOffsets(self, offsets:list):
-        """Set calibration offsets to be added to each leaf extension before sending to HW"""
-        if len(offsets) != self._hwsoc.nleaflets:
-            raise RuntimeError("length of Calibration offsets list must be equal to the number of leaflets managed")
-        for ii, o in enumerate(offsets):
-            self._hwsoc.cal_offsets[ii] += o
-        logger.debug('New HW offsets: '+str(self._hwsoc.cal_offsets))
 
     # pre-defined leaflet configurations
     @pyqtSlot()

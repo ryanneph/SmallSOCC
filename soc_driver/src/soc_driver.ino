@@ -5,8 +5,7 @@
 #define MAGIC2 0xD7
 #define PRE_ABSPOS_ONE 0xB1
 #define PRE_ABSPOS_ALL 0xB2
-#define PRE_RELPOS_ONE 0xC1
-#define PRE_RELPOS_ALL 0xC2
+#define PRE_CALIBRATE  0xB3
 
 #define SIG_MOVE_OK    0x50
 #define SIG_HWERROR    0x51
@@ -107,6 +106,9 @@ void loop() {
 
                 Serial.write(byte(SIG_MOVE_OK));
             }
+        } else if (mode == PRE_CALIBRATE) {
+            Serial.println("Calibration Signal Received");
+            Serial.write(PRE_CALIBRATE);
         }
     }
 }

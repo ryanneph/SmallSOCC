@@ -56,7 +56,6 @@ class HWSOC(Borg):
         self.EMULATOR_MODE = False
         self._USB_HID=HID
         self._BAUD = BAUD
-        self.cal_offsets = [0]*nleaflets
         self.nleaflets = nleaflets
 
         self._init_hw()
@@ -143,29 +142,12 @@ class HWSOC(Borg):
         self.recvsighandler.join()
         self.recvsighandler = None
 ######################################
-    #  def send_displacement(self, idx, pos):
-    #      """send relative displacement for a single leaflet"""
-    #      if self.EMULATOR_MODE:
-    #          return
-    #      if not self.is_valid_idx(idx):
-    #          raise IndexError('index specified is out of bounds')
-    #      self.send_structured_signal(self.PRE_RELPOS_ONE, bytes([idx]))
-
-    #  def send_all_displacements(self, poslist):
-    #      """send all relative displacements in single bytestring"""
-    #      if self.EMULATOR_MODE:
-    #          return
-    #      if not poslist or len(poslist) != self.nleaflets:
-    #          raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
-    #      self.send_structured_signal(self.PRE_RELPOS_all, b''.join([pos.to_bytes(2, byteorder='big', signed=True) for pos in poslist]))
-######################################
     def set_position(self, idx, pos):
         """send extension for a single leaflet"""
         if self.EMULATOR_MODE:
             return
         if not self.is_valid_idx(idx):
             raise IndexError('index specified is out of bounds')
-        pos += self.cal_offsets[idx]
         self.send_structured_signal(self.PRE_ABSPOS_ONE, bytes([idx]) + pos.to_bytes(2, byteorder='big', signed=True))
 
     def set_all_positions(self, poslist):
@@ -174,8 +156,10 @@ class HWSOC(Borg):
             return
         if not poslist or len(poslist) != self.nleaflets:
             raise AttributeError('list of leaflet extensions must be len={} not len={}'.format(self.nleaflets, len(poslist)))
-        poslist = [x + self.cal_offsets[ii] for ii, x in enumerate(poslist)]
         self.send_structured_signal(self.PRE_ABSPOS_ALL, b''.join([pos.to_bytes(2, byteorder='big', signed=True) for pos in poslist]))
+
+    def set_calibration(self):
+        self.send_structured_signal(self.PRE_CALIBRATE, b'')
 ######################################
 
     def get_position(self, idx):

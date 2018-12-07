@@ -51,7 +51,6 @@ ApplicationWindow {
         name: "MODE_NORMAL"
         PropertyChanges { target: btn_calibrate_accept; visible: false }
         PropertyChanges { target: btn_calibrate_cancel; visible: false }
-        PropertyChanges { target: btn_calibrate_reset; visible: false }
         PropertyChanges { target: btn_calibrate; visible: true }
         StateChangeScript {
           // script: leaflet_assembly.enableHWLink();
@@ -62,7 +61,6 @@ ApplicationWindow {
         PropertyChanges { target: btn_calibrate; visible: false }
         PropertyChanges { target: btn_calibrate_accept; visible: true }
         PropertyChanges { target: btn_calibrate_cancel; visible: true }
-        PropertyChanges { target: btn_calibrate_reset; visible: true }
         PropertyChanges { target: leaflet_assembly; preventCollisions: false; limitTravel: false }
         PropertyChanges { target: qsequencelist; enabled:false }
         StateChangeScript {
@@ -235,14 +233,13 @@ ApplicationWindow {
                 borderwidth: 0
                 text: "Accept Calibration"
                 onClicked: {
-                  var extmap = leaflet_assembly.getExtension();
-                  leaflet_assembly.setOffsets(extmap)
+                  leaflet_assembly.setCalibration()
                   updateSOCConfig()
                   footer_status.text = "Calibration Accepted";
                   app_state.state = "MODE_NORMAL"
                 }
               }
-              QStylizedButton { /* Start Calibration */
+              QStylizedButton { /* Cancel Calibration */
                 id: btn_calibrate_cancel
                 visible: false
                 Layout.fillWidth: true
@@ -253,21 +250,6 @@ ApplicationWindow {
                 onClicked: {
                   updateSOCConfig()
                   footer_status.text = "Calibration Cancelled";
-                  app_state.state = "MODE_NORMAL"
-                }
-              }
-              QStylizedButton { /* Reset Calibration */
-                id: btn_calibrate_reset
-                // Layout.topMargin: 20
-                Layout.preferredWidth: 50
-                visible: false
-                bgcolor: "#ff4f4f"
-                borderwidth: 0
-                text: "Reset"
-                onClicked: {
-                  leaflet_assembly.resetOffsets();
-                  updateSOCConfig()
-                  footer_status.text = "Calibration Reset";
                   app_state.state = "MODE_NORMAL"
                 }
               }
