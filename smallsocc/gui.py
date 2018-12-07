@@ -78,7 +78,7 @@ def preExit():
 def start_gui():
     parser = argparse.ArgumentParser(description='SmallSOCC v{!s} - Frontend for interfacing with SOC hardware'.format(VERSION_FULL),
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default='WARNING', help='set the loglevel')
+    parser.add_argument('-L', '--loglevel', type=str, choices=sorted([*logging._nameToLevel.keys()], key=lambda x: logging._nameToLevel[x], reverse=True), default='WARNING', help='set the loglevel')
     parser.add_argument('--logconf', type=str, default=os.path.join(LIB_DIR, 'logging.conf.json'), help='path to log configuration')
     args = parser.parse_args()
 
@@ -97,7 +97,7 @@ def start_gui():
             # SAMPLE ITEMS FOR DEBUG
             from sequence import SequenceItem, SequenceItemType
             sample_sequenceitems = [
-                SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=1000, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
+                SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=1000, date_created="2016 Oct 31 12:00:00", type='Manual'),
                 SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
                 SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=3000, description="descriptive text3"),
                 SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=4500, description="descriptive text4"),

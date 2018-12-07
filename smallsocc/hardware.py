@@ -4,6 +4,7 @@ from borg import Borg
 import serial
 from serial.tools import list_ports
 from serial.threaded import Protocol, ReaderThread
+import binascii
 
 logger = logging.getLogger(__name__)
 
@@ -17,21 +18,27 @@ class RecvSignalHandler(Protocol):
     def data_received(self, data):
         # only process freshest signal if more are buffered
         if bytes([data[-1]]) == HWSOC.SIG_MOVE_OK:
-            logger.debug2("Recv: SIGNAL:MOVE_OK")
-        if bytes([data[-1]]) == HWSOC.SIG_HWERROR:
-            logger.warning("Recv: SIGNAL:HWERROR")
+            logger.monitor("Recv: SIGNAL:MOVE_OK")
+        elif bytes([data[-1]]) == HWSOC.SIG_HWERROR:
+            logger.monitor("Recv: SIGNAL:HWERROR")
             #TODO: Signal to GUI that an error has occured
+        else:
+            for d in data.split('\n'.encode()):
+                try:
+                    str_rep = d.decode('utf-8').rstrip('\r\n')
+                    logger.monitor("Recv (text): \"{}\" ({})".format(str_rep, binascii.hexlify(d)))
+                except Exception as e:
+                    logger.monitor("Recv (bin): {}".format(binascii.hexlify(d)))
 
 
 class HWSOC(Borg):
     """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
-    MAGIC_BYTES    = b'\xFF\xD7'
-    PRE_ABSPOS_ONE = b'\xB1'
-    PRE_ABSPOS_ALL = b'\xB2'
-    PRE_RELPOS_ONE = b'\xC1'
-    PRE_RELPOS_ALL = b'\xC2'
-    SIG_MOVE_OK    = b'\x50'
-    SIG_HWERROR    = b'\x51'
+    MAGIC_BYTES    = b'\xFF\xD7' # use before every signal sent to HW
+    PRE_ABSPOS_ONE = b'\xB1'     # use before updating a single leaflet position
+    PRE_ABSPOS_ALL = b'\xB2'     # use before updating all leaflet positions
+    PRE_CALIBRATE  = b'\xB3'     # send without payload to reset HW encoder position state
+    SIG_MOVE_OK    = b'\x50'     # receive from HW after successful leaflet repositioning
+    SIG_HWERROR    = b'\x51'     # receive from HW after error occurs (at any time)
 
     def __init__(self, nleaflets=None, HID=None, BAUD=115200):
         """
