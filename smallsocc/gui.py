@@ -85,7 +85,7 @@ def start_gui():
     # initialize logger
     soclog.init_logging(level=logging._nameToLevel.get(args.loglevel, None), config_path=args.logconf)
 
-    HWSOC(8, HID=None) # init singleton instance for controlling hardware
+    hwsoc = HWSOC(8, HID=None) # init singleton instance for controlling hardware
 
     listmodel = sequence.SequenceListModel()
     if args.loglevel is not 'NOTSET' and logging._nameToLevel[args.loglevel] <= logging.DEBUG:
@@ -147,6 +147,7 @@ def start_gui():
     rootContext.setContextProperty("SequenceListModel", listmodel)
     pathhandler_instance = pathhandler.PathHandler()
     rootContext.setContextProperty("PathHandler", pathhandler_instance)
+    rootContext.setContextProperty("HWSOC", hwsoc)
     rootContext.setContextProperty("sratio", sratio)
     rootContext.setContextProperty("fratio", fratio)
     rootContext.setContextProperty("debug_mode", logging._nameToLevel[args.loglevel]<=logging.DEBUG)

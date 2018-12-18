@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 class LeafletAssembly(QQuickItem):
     """Base class for all leaflet assembly types"""
     #  Q_CLASSINFO('DefaultProperty', 'leaflets')
+
     def __init__(self, parent=None):
         QQuickItem.__init__(self, parent)
         self._leaflets = []

@@ -1,10 +1,12 @@
 import os
 import logging
-from borg import Borg
 import serial
+from serial.threaded import Protocol
 from serial.tools import list_ports
-from serial.threaded import Protocol, ReaderThread
 import binascii
+from borg import Borg
+from treader import ReaderThread
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, pyqtProperty, QThread
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,7 @@ class RecvSignalHandler(Protocol):
 
         return tokens
 
-    def data_received(self, data):
+    def data_received(self, caller, data):
         # only process freshest signal if more are buffered
         if not (b'\x00' in data or '\n'.encode() in data):
             self._buf += data
@@ -50,9 +52,10 @@ class RecvSignalHandler(Protocol):
             if sep == b'\x00':
                 if bytes([bt[0]]) == HWSOC.SIG_MOVE_OK:
                     logger.monitor("Recv: SIGNAL:MOVE_OK")
+                    caller.sigRecvdMoveOK.emit()
                 elif bytes([bt[0]]) == HWSOC.SIG_HWERROR:
                     logger.monitor("Recv: SIGNAL:HWERROR")
-                    #TODO: Signal to GUI that an error has occured
+                    caller.sigRecvdHWError.emit()
                 else:
                     logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
 
@@ -63,7 +66,9 @@ class RecvSignalHandler(Protocol):
                     except Exception as e:
                         logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
 
-class HWSOC(Borg):
+
+
+class HWSOC(Borg, QObject):
     """ Singleton/Borg class that handles interfacing with hardware leaflet controller """
     MAGIC_BYTES    = b'\xFF\xD7' # use before every signal sent to HW
     PRE_ABSPOS_ONE = b'\xB1'     # use before updating a single leaflet position
@@ -79,18 +84,23 @@ class HWSOC(Borg):
             BAUD (int): Serial baud rate - must match serial device baud exactly
         """
         Borg.__init__(self)
+        QObject.__init__(self)
         if self.__dict__.get('initialized', False):
             return
 
         self.initialized = False
         self._fserial = None
-        self.recvsighandler = None
+        self._recvsighandler = None
         self.EMULATOR_MODE = False
         self._USB_HID=HID
         self._BAUD = BAUD
         self.nleaflets = nleaflets
 
         self._init_hw()
+
+    @pyqtProperty(QThread, constant=True)
+    def recvsighandler(self):
+        return self._recvsighandler
 
     def _activate_emulator_mode(self):
         self.EMULATOR_MODE = True
@@ -154,8 +164,8 @@ class HWSOC(Borg):
         if self.EMULATOR_MODE:
             return
         full_payload = self.MAGIC_BYTES + pre_bytes + payload
-        if self.recvsighandler:
-            self.recvsighandler.write(full_payload)
+        if self._recvsighandler:
+            self._recvsighandler.write(full_payload)
         else:
             self._fserial.write(full_payload)
             self._fserial.reset_input_buffer()
@@ -169,12 +179,12 @@ class HWSOC(Borg):
             raise exc
 
     def start_signal_handler(self):
-        self.recvsighandler = ReaderThread(self._fserial, RecvSignalHandler)
-        self.recvsighandler.start()
+        self._recvsighandler = ReaderThread(self._fserial, RecvSignalHandler)
+        self._recvsighandler.start()
 
     def stop_signal_handler(self):
-        self.recvsighandler.join()
-        self.recvsighandler = None
+        self._recvsighandler.join()
+        self._recvsighandler = None
 ######################################
     def set_position(self, idx, pos):
         """send extension for a single leaflet"""
@@ -191,9 +201,3 @@ class HWSOC(Borg):
     def set_calibration(self):
         self.send_structured_signal(self.PRE_CALIBRATE, b'')
 ######################################
-
-    def get_position(self, idx):
-        raise NotImplementedError('Feedback mechanism not yet implemented in hardware')
-
-    def sync(self):
-        raise NotImplementedError('HW/SW Sync not yet implemented')

@@ -1,6 +1,8 @@
 #include <Adafruit_CircuitPlayground.h>
 #include <math.h>
 
+#include "buttons.h"
+
 #define MAGIC1 0xFF
 #define MAGIC2 0xD7
 
@@ -11,11 +13,11 @@
 #define SIG_MOVE_OK    0xA0
 #define SIG_HWERROR    0xA1
 
-int time_to_error = 5;
+const auto& cp = CircuitPlayground;
 
 void setup() {
     Serial.begin(115200);
-    CircuitPlayground.begin();
+    cp.begin();
 
     /* Startup Seqeunce */
     uint8_t nloops = 4;
@@ -59,9 +61,15 @@ void move_leaf(int i, int ext) {
         Serial.write(byte(SIG_HWERROR));
         return;
     }
-    CircuitPlayground.setPixelColor(i+1, ext, 0, 30);
+    cp.setPixelColor(i+1, ext, 0, 30);
 }
 
+bool isSwitchOn() {
+    return cp.slideSwitch();
+}
+
+
+bool lastButtonState[] = {false, false};
 void loop() {
   /* Serial Communication Mini-language
    * to set leaflet position, send magic 2-bytes 0xFF 0xD7 followed by
@@ -74,6 +82,19 @@ void loop() {
 
     byte buf[16];
     byte mode;
+
+    // physical input
+    bool lbtnread = isButtonPressed(CPBUTTON::LEFT);
+    if (lbtnread && !lastButtonState[CPBUTTON::LEFT]) {
+        send_signal(SIG_MOVE_OK);
+    }
+    lastButtonState[CPBUTTON::LEFT] = lbtnread;
+
+    bool rbtnread = isButtonPressed(CPBUTTON::RIGHT);
+    if (rbtnread && !lastButtonState[CPBUTTON::RIGHT]) {
+        send_signal(SIG_HWERROR);
+    }
+    lastButtonState[CPBUTTON::RIGHT] = rbtnread;
 
     // leaf motion commands
     uint8_t leaflet;
@@ -93,11 +114,7 @@ void loop() {
                     /* Serial.println(upos); */
                     /* Serial.println(""); */
                 }
-                if (--time_to_error <= 0) {
-                    // emulate a hardware error
-                    time_to_error = 5;
-                    send_signal(SIG_HWERROR);
-                } else {
+                if (isSwitchOn()) {
                     send_signal(SIG_MOVE_OK);
                 }
             }
@@ -116,7 +133,9 @@ void loop() {
                 /* Serial.print(" | pos "); */
                 /* Serial.println(upos); */
 
-                send_signal(SIG_MOVE_OK);
+                if (isSwitchOn()) {
+                    send_signal(SIG_MOVE_OK);
+                }
             }
         } else if (mode == PRE_CALIBRATE) {
             Serial.println("Calibration Signal Received");

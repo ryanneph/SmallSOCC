@@ -87,6 +87,16 @@ ApplicationWindow {
 
     // keep SOC Display and HW in sync with currentIndex in listview
     qsequencelist.lvseq.onCurrentItemChanged.connect(updateSOCConfig);
+
+    // connect to HW signals
+    HWSOC.recvsighandler.sigRecvdMoveOK.connect( function() {
+      console.debug("Received MoveOK signal");
+      footer_status.text = "Received MoveOK";
+    } )
+    HWSOC.recvsighandler.sigRecvdHWError.connect( function() {
+      console.debug("Received HWERROR signal");
+      footer_status.text = "Received HWERROR";
+    } )
   }
 
 
