@@ -5,6 +5,7 @@ import sys, os
 from os.path import join as pjoin
 from string import Template
 from subprocess import check_output
+from smallsocc.version import VERSION_FULL
 
 cdir = pjoin(os.path.dirname(os.path.abspath(__file__)), 'smallsocc')
 
@@ -24,3 +25,5 @@ if __name__ == '__main__':
 
     with open(f+'.py', 'w') as fd:
         fd.writelines(temp.substitute({'version_hash': git_hash()}))
+
+    print("Setting version to: {}".format(VERSION_FULL))

@@ -1,6 +1,6 @@
 VERSION_MAJOR = '0'
 VERSION_MINOR = '2'
-VERSION_PATCH = '1'
+VERSION_PATCH = '2'
 VERSION_HASH  = '$version_hash'
 
 VERSION_FULL = '{!s}.{!s}'.format(VERSION_MAJOR, VERSION_MINOR) + \
