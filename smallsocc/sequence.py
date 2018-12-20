@@ -234,15 +234,19 @@ class SequenceListModel(QtCore.QAbstractListModel):
             logger.exception('delegate refresh failed for index "{}"'.format(str(idx)))
 
     ## METHODS
+    def __len__(self):
+        return len(self._items)
+
     # Virtual Base Method
     sizeChanged = pyqtSignal([int])
     @pyqtProperty(int, notify=sizeChanged)
     def size(self):
-        return self.rowCount()
+        return self.__len__()
 
     @pyqtSlot(result=int)
     def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self._items)
+        return self.__len__()
+
 
     @pyqtSlot(int, result=SequenceItem)
     def getItem(self, index: int):

@@ -14,6 +14,7 @@ import logging
 
 from OpenGL import GL
 from PyQt5 import QtCore
+from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtQuick import QQuickItem
@@ -27,6 +28,7 @@ from hardware import HWSOC
 import leaflet
 import leafletassembly
 import sequence
+from treatmentmanager import TreatmentManager, TreatmentManagerProxy
 import pathhandler
 
 logger = logging.getLogger(__name__)
@@ -141,6 +143,11 @@ def start_gui():
     fratio = min(_h*refDpi/(dpi*refHeight), _w*refDpi/(dpi*refWidth)) # font pointSize scaling
     logger.debug('Setting scaling ratios - general: {}; font: {}'.format(sratio, fratio))
 
+    treatman = TreatmentManager(listmodel)
+    hwsoc.recvsighandler.sigRecvdMoveOK.connect(treatman.setHWOK)
+    hwsoc.recvsighandler.sigRecvdHWError.connect(treatman.abortTreatment)
+    treatmanproxy = TreatmentManagerProxy(treatman)
+
     ## Set accessible properties/objects in QML Root Context
     rootContext.setContextProperty("mainwindow_title", 'SOC Controller - {!s}'.format(VERSION_FULL))
     # make seq. list model accessible to qml-listview
@@ -148,6 +155,7 @@ def start_gui():
     pathhandler_instance = pathhandler.PathHandler()
     rootContext.setContextProperty("PathHandler", pathhandler_instance)
     rootContext.setContextProperty("HWSOC", hwsoc)
+    rootContext.setContextProperty("TreatmentManager", treatmanproxy)
     rootContext.setContextProperty("sratio", sratio)
     rootContext.setContextProperty("fratio", fratio)
     rootContext.setContextProperty("debug_mode", logging._nameToLevel[args.loglevel]<=logging.DEBUG)

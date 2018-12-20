@@ -35,6 +35,12 @@ class NamedMember():
             volatile = copy.deepcopy(self.volatile, memodict)
         )
 
+    def __str__(self):
+        return str(self.value)
+
+    def __repr__(self):
+        return self.__str__()
+
     @property
     def value(self):
         """ use _getter as middleware for returning _value """

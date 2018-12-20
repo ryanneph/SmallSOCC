@@ -1,5 +1,5 @@
 import QtQuick 2.5
-import QtQuick.Controls 2.0
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import "dynamicqml.js" as DynamicQML
 
@@ -19,6 +19,7 @@ ApplicationWindow {
   footer: QTimedText {id: "footer_status"; interval: 5000}
 
   // global state variables TODO: Replace with application state
+  property bool hwsync_on: false
   property bool isTreating: false
 
   // prompt a refresh of the SOC display using data from the currently selected SequenceItem
@@ -42,32 +43,15 @@ ApplicationWindow {
       leaflet_assembly.publishToHW()
     }
   }
-
-  StateGroup {
-    id: app_state
-    state: 'MODE_NORMAL'
-    states: [
-      State {
-        name: "MODE_NORMAL"
-        PropertyChanges { target: btn_calibrate_accept; visible: false }
-        PropertyChanges { target: btn_calibrate_cancel; visible: false }
-        PropertyChanges { target: btn_calibrate; visible: true }
-        StateChangeScript {
-          // script: leaflet_assembly.enableHWLink();
-        }
-      },
-      State {
-        name: "MODE_CALIBRATE"
-        PropertyChanges { target: btn_calibrate; visible: false }
-        PropertyChanges { target: btn_calibrate_accept; visible: true }
-        PropertyChanges { target: btn_calibrate_cancel; visible: true }
-        PropertyChanges { target: leaflet_assembly; preventCollisions: false; limitTravel: false }
-        PropertyChanges { target: qsequencelist; enabled:false }
-        StateChangeScript {
-          // script: leaflet_assembly.disableHWLink();
-        }
-      }
-    ]
+  function connectUItoHW(x) {
+    if (x === undefined) { x = true; }
+    if (Boolean(x) && !hwsync_on) {
+      qsequencelist.lvseq.onCurrentItemChanged.connect(updateSOCConfig);
+      hwsync_on = true;
+    } else if (!Boolean(x) && hwsync_on) {
+      qsequencelist.lvseq.onCurrentItemChanged.disconnect(updateSOCConfig);
+      hwsync_on = false;
+    }
   }
 
   // startup signal/slot connections
@@ -86,19 +70,34 @@ ApplicationWindow {
     qsequencelist.lvseq.currentIndex = -1;
 
     // keep SOC Display and HW in sync with currentIndex in listview
-    qsequencelist.lvseq.onCurrentItemChanged.connect(updateSOCConfig);
-
-    // connect to HW signals
-    HWSOC.recvsighandler.sigRecvdMoveOK.connect( function() {
-      console.debug("Received MoveOK signal");
-      footer_status.text = "Received MoveOK";
-    } )
-    HWSOC.recvsighandler.sigRecvdHWError.connect( function() {
-      console.debug("Received HWERROR signal");
-      footer_status.text = "Received HWERROR";
-    } )
+    connectUItoHW(true);
   }
 
+  StateGroup {
+    id: app_state
+    state: ""
+    states: [
+      State {
+        name: "MODE_CALIBRATE"
+        PropertyChanges { target: btn_save_leaflet_config; enabled: false }
+        PropertyChanges { target: btn_reset_leaflet_config; enabled: false }
+        PropertyChanges { target: bottom_frame; enabled: false }
+        PropertyChanges { target: btn_calibrate; visible: false }
+        PropertyChanges { target: btn_calibrate_accept; visible: true }
+        PropertyChanges { target: btn_calibrate_cancel; visible: true }
+        PropertyChanges { target: leaflet_assembly; preventCollisions: false; limitTravel: false }
+        PropertyChanges { target: qsequencelist; enabled: false }
+      }
+    ]
+  }
+
+  QErrorOverlay {
+    id: error_overlay
+    parent: Overlay.overlay
+    anchors.fill: parent
+    anchors.margins: 5
+    visible: false
+  }
 
   ColumnLayout {
     /* split into two horizontal control containers */
@@ -186,6 +185,7 @@ ApplicationWindow {
               }
             }
             Button { /* Save SequenceItem to ListModel */
+              id: btn_save_leaflet_config
               Layout.row: 2
               Layout.fillWidth: true
               text: "Save Leaflet Configuration"
@@ -207,6 +207,7 @@ ApplicationWindow {
               }
             }
             Button { /* Reset SequenceItem */
+              id: btn_reset_leaflet_config
               Layout.row: 2
               Layout.column: 1
               Layout.fillWidth: true
@@ -224,6 +225,7 @@ ApplicationWindow {
 
               QStylizedButton { /* Start/Accept Calibration */
                 id: btn_calibrate
+                visible: true
                 Layout.fillWidth: true
                 borderwidth: 0
                 textcolor: '#333'
@@ -246,7 +248,7 @@ ApplicationWindow {
                   leaflet_assembly.setCalibration()
                   updateSOCConfig()
                   footer_status.text = "Calibration Accepted";
-                  app_state.state = "MODE_NORMAL"
+                  app_state.state = ""
                 }
               }
               QStylizedButton { /* Cancel Calibration */
@@ -261,7 +263,7 @@ ApplicationWindow {
                 onClicked: {
                   updateSOCConfig()
                   footer_status.text = "Calibration Cancelled";
-                  app_state.state = "MODE_NORMAL"
+                  app_state.state = ""
                 }
               }
             }
@@ -327,7 +329,7 @@ ApplicationWindow {
           id: field_json_path
           Layout.fillWidth: true
           readOnly: true
-          text: "Load a treatment plan..."
+          text: "<Load a treatment plan...>"
         }
         Button { /* Load JSON */
           text: "Load"
