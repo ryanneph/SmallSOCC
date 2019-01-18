@@ -144,8 +144,9 @@ def start_gui():
     logger.debug('Setting scaling ratios - general: {}; font: {}'.format(sratio, fratio))
 
     treatman = TreatmentManager(listmodel)
-    hwsoc.recvsighandler.sigRecvdMoveOK.connect(treatman.setHWOK)
-    hwsoc.recvsighandler.sigRecvdHWError.connect(treatman.abortTreatment)
+    if not hwsoc.EMULATOR_MODE:
+        hwsoc.recvsighandler.sigRecvdMoveOK.connect(treatman.setHWOK)
+        hwsoc.recvsighandler.sigRecvdHWError.connect(treatman.abortTreatment)
     treatmanproxy = TreatmentManagerProxy(treatman)
 
     ## Set accessible properties/objects in QML Root Context
