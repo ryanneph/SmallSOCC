@@ -161,4 +161,4 @@ def start_gui():
 
 if __name__ == '__main__':
     # block until window is closed - event handler loop
-    sys.exit(start_gui)
+    sys.exit(start_gui())
