@@ -1,22 +1,24 @@
 import os
 import logging
+import time
+import binascii
 import serial
 from serial.threaded import Protocol
-from serial.tools import list_ports
-import binascii
-from borg import Borg
-from treader import ReaderThread
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, pyqtProperty, QThread
+
+from serialthread import SerialThread
+from borg import Borg
 
 logger = logging.getLogger(__name__)
 
-class RecvSignalHandler(Protocol):
-    def __init__(self):
-        super().__init__()
-        self._buf = b''
+class TSerialProtocol(Protocol, QObject):
+    sigRecvdHWError   = pyqtSignal()
+    sigRecvdMoveOK    = pyqtSignal()
 
-    def connection_made(self, transport):
-        logger.debug("began threaded serial read-loop")
+    def __init__(self):
+        Protocol.__init__(self)
+        QObject.__init__(self, None)
+        self._buf = b''
 
     def split_bytes(self, data):
         """split at '\n' or b'\x00' and return list of bytes with identifier as string or bytes"""
@@ -37,7 +39,7 @@ class RecvSignalHandler(Protocol):
 
         return tokens
 
-    def data_received(self, caller, data):
+    def data_received(self, data):
         try:
             # only process freshest signal if more are buffered
             if not (b'\x00' in data or '\n'.encode() in data):
@@ -47,16 +49,18 @@ class RecvSignalHandler(Protocol):
             data = self._buf + data
             self._buf = b''
 
+            logger.debug2('rawdata: {!s}'.format(data))
             tokens = self.split_bytes(data)
+            logger.debug2('tokens: {!s}'.format(tokens))
 
             for sep, bt in tokens:
                 if sep == b'\x00':
                     if bytes([bt[0]]) == HWSOC.SIG_MOVE_OK:
                         logger.monitor("Recv: SIGNAL:MOVE_OK")
-                        caller.sigRecvdMoveOK.emit()
+                        self.sigRecvdMoveOK.emit()
                     elif bytes([bt[0]]) == HWSOC.SIG_HWERROR:
                         logger.monitor("Recv: SIGNAL:HWERROR")
-                        caller.sigRecvdHWError.emit()
+                        self.sigRecvdHWError.emit()
                     else:
                         logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
 
@@ -67,8 +71,11 @@ class RecvSignalHandler(Protocol):
                         except Exception as e:
                             logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
         except Exception as e:
-            logger.monitor("Exception encountered in signal monitor: {!s}".format(e))
+            logger.exception("Exception encountered in signal monitor: {!s}".format(e))
 
+    def connection_lost(self, error):
+        logger.exception('Serial connection to hardware was broken')
+        self.sigRecvdHWError.emit()
 
 
 class HWSOC(Borg, QObject):
@@ -80,7 +87,7 @@ class HWSOC(Borg, QObject):
     SIG_MOVE_OK    = b'\xA0'     # receive from HW after successful leaflet repositioning
     SIG_HWERROR    = b'\xA1'     # receive from HW after error occurs (at any time)
 
-    def __init__(self, nleaflets=None, HID=None, BAUD=115200):
+    def __init__(self, nleaflets=None, HID=None, BAUD=None):
         """
         Args:
             HID (str):  USB hardware id, if present: only match exactly and fallback to EMULATOR_MODE otherwise
@@ -91,84 +98,20 @@ class HWSOC(Borg, QObject):
         if self.__dict__.get('initialized', False):
             return
 
-        self.initialized = False
-        self._fserial = None
-        self._recvsighandler = None
-        self.EMULATOR_MODE = False
-        self._USB_HID=HID
-        self._BAUD = BAUD
+        self._tserial = None
         self.nleaflets = nleaflets
-
-        self._init_hw()
+        self.init_serial_interface(HID, BAUD)
+        self.initialized = True
 
     @pyqtProperty(QThread, constant=True)
-    def recvsighandler(self):
-        return self._recvsighandler
-
-    def _activate_emulator_mode(self):
-        self.EMULATOR_MODE = True
-        try: self._fserial.close()
-        except: pass
-        self._fserial = None
-        logger.warning('EMULATOR MODE ACTIVATED')
-
-    @staticmethod
-    def device_info(portinfo):
-        return "deviceid=\"{}:{}\" on port=\"{!s}\" :: {} {} ({})".format(
-            portinfo.vid, portinfo.pid, portinfo.name, portinfo.manufacturer, portinfo.product, portinfo.description
-        )
-
-    def _init_hw(self):
-        if self.initialized:
-            return
-
-        portlist = []
-        # try to exactly match by HID
-        if self._USB_HID:
-            match = list_ports.grep(self._USB_HID)
-            try: portlist.append(next(match))
-            except StopIteration:
-                logger.warning("no serial devices with deviceid=\"{!s}\" were found".format(self._USB_HID))
-
-        # try to match first available serial device
-        if not portlist:
-            logger.info("Discovering available serial devices...")
-            portlist = list_ports.comports()
-            for p in list(portlist):
-                # TODO: this may be an imperfect check for a valid device
-                if p.vid is None:
-                    portlist.remove(p)
-
-        for p in portlist:
-            PORT = p.device
-            try:
-                self._fserial = serial.Serial(PORT, self._BAUD, timeout=0, writeTimeout=0)
-                logger.info("Connected to serial device ({!s})".format(self.device_info(p)))
-                break
-            except serial.serialutil.SerialException:
-                continue
-
-        if self._fserial is None:
-            if not portlist:
-                logger.warning("no serial devices were discovered")
-            else:
-                logger.warning("failed to open connection to any of the discovered serial devices: %s", *["\n  - {}".format(self.device_info(p)) for p in portlist])
-                    #  logger.debug(p.device, p.name, p.description, p.hwid, p.vid, p.pid, p.serial_number, p.location, p.manufacturer, p.product, p.interface)
-            self._activate_emulator_mode()
-        else:
-            self.start_signal_handler()
-            # set to all open leaflets
-            self.set_all_positions([0]*self.nleaflets)
-        self.initialized = True
-        return
+    def tserialinterface(self):
+        return self._tserial
 
 ######################################
     def send_structured_signal(self, pre_bytes, payload):
-        if self.EMULATOR_MODE:
-            return
         full_payload = self.MAGIC_BYTES + pre_bytes + payload
-        if self._recvsighandler:
-            self._recvsighandler.write(full_payload)
+        if self._tserial:
+            self._tserial.write(full_payload)
         else:
             self._fserial.write(full_payload)
             self._fserial.reset_input_buffer()
@@ -176,18 +119,15 @@ class HWSOC(Borg, QObject):
     def is_valid_idx(self, idx):
         return idx<self.nleaflets and idx>=0
 
-    def connection_lost(self, exc):
-        if exc:
-            logger.debug1("lost connection to serial interface")
-            raise exc
+    def init_serial_interface(self, HID=None, BAUD=None):
+        self._tserial = SerialThread(TSerialProtocol, HID, BAUD)
+        # set to all open leaflets
+        self.set_all_positions([0]*self.nleaflets)
 
-    def start_signal_handler(self):
-        self._recvsighandler = ReaderThread(self._fserial, RecvSignalHandler)
-        self._recvsighandler.start()
-
-    def stop_signal_handler(self):
-        self._recvsighandler.join()
-        self._recvsighandler = None
+    def close_serial_interface(self):
+        self._tserial.close()
+        self._tserial.join()
+        self._tserial = None
 ######################################
     def set_position(self, idx, pos):
         """send extension for a single leaflet"""

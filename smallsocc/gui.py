@@ -87,7 +87,7 @@ def start_gui():
     # initialize logger
     soclog.init_logging(level=logging._nameToLevel.get(args.loglevel, None), config_path=args.logconf)
 
-    hwsoc = HWSOC(8, HID=None) # init singleton instance for controlling hardware
+    hwsoc = HWSOC(8, HID=None, BAUD=None) # init singleton instance for controlling hardware
 
     listmodel = sequence.SequenceListModel()
     if args.loglevel is not 'NOTSET' and logging._nameToLevel[args.loglevel] <= logging.DEBUG:
@@ -144,9 +144,8 @@ def start_gui():
     logger.debug('Setting scaling ratios - general: {}; font: {}'.format(sratio, fratio))
 
     treatman = TreatmentManager(listmodel)
-    if not hwsoc.EMULATOR_MODE:
-        hwsoc.recvsighandler.sigRecvdMoveOK.connect(treatman.setHWOK)
-        hwsoc.recvsighandler.sigRecvdHWError.connect(treatman.abortTreatment)
+    hwsoc.tserialinterface.protocol.sigRecvdMoveOK.connect(treatman.setHWOK)
+    hwsoc.tserialinterface.protocol.sigRecvdHWError.connect(treatman.abortTreatment)
     treatmanproxy = TreatmentManagerProxy(treatman)
 
     ## Set accessible properties/objects in QML Root Context

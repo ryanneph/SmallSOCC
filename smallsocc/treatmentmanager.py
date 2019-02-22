@@ -164,11 +164,14 @@ class TreatmentManager(QObject):
             self.waitinghwok = True
             self._hwsoc.set_all_positions(extension_list)
             while self.waitinghwok:
-                # spin event loop until hwok signal is recieved
+                # spin event loop until hwok signal is recieved after delivery of prev. segment
                 QCoreApplication.processEvents()
 
             t1 = time.perf_counter()
             while (time.perf_counter()-t1) < duration*0.001:
+                # catch signals every 250ms while delivering
+                if (time.perf_counter()-t1)%0.25:
+                    QCoreApplication.processEvents()
                 if not self.state_running:
                     # early exit from UI
                     break
