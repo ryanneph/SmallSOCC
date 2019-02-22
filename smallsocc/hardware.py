@@ -38,33 +38,36 @@ class RecvSignalHandler(Protocol):
         return tokens
 
     def data_received(self, caller, data):
-        # only process freshest signal if more are buffered
-        if not (b'\x00' in data or '\n'.encode() in data):
-            self._buf += data
-            return
+        try:
+            # only process freshest signal if more are buffered
+            if not (b'\x00' in data or '\n'.encode() in data):
+                self._buf += data
+                return
 
-        data = self._buf + data
-        self._buf = b''
+            data = self._buf + data
+            self._buf = b''
 
-        tokens = self.split_bytes(data)
+            tokens = self.split_bytes(data)
 
-        for sep, bt in tokens:
-            if sep == b'\x00':
-                if bytes([bt[0]]) == HWSOC.SIG_MOVE_OK:
-                    logger.monitor("Recv: SIGNAL:MOVE_OK")
-                    caller.sigRecvdMoveOK.emit()
-                elif bytes([bt[0]]) == HWSOC.SIG_HWERROR:
-                    logger.monitor("Recv: SIGNAL:HWERROR")
-                    caller.sigRecvdHWError.emit()
-                else:
-                    logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
-
-            elif sep == b'\n':
-                    try:
-                        str_rep = bt.decode('ascii').rstrip('\r\n')
-                        logger.monitor("Recv (text): \"{}\"".format(str_rep))
-                    except Exception as e:
+            for sep, bt in tokens:
+                if sep == b'\x00':
+                    if bytes([bt[0]]) == HWSOC.SIG_MOVE_OK:
+                        logger.monitor("Recv: SIGNAL:MOVE_OK")
+                        caller.sigRecvdMoveOK.emit()
+                    elif bytes([bt[0]]) == HWSOC.SIG_HWERROR:
+                        logger.monitor("Recv: SIGNAL:HWERROR")
+                        caller.sigRecvdHWError.emit()
+                    else:
                         logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
+
+                elif sep == b'\n':
+                        try:
+                            str_rep = bt.decode('ascii').rstrip('\r\n')
+                            logger.monitor("Recv (text): \"{}\"".format(str_rep))
+                        except Exception as e:
+                            logger.monitor("Recv (bin): {}".format(binascii.hexlify(bt)))
+        except Exception as e:
+            logger.monitor("Exception encountered in signal monitor: {!s}".format(e))
 
 
 
