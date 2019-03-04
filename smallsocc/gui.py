@@ -24,6 +24,7 @@ sys.path.insert(0, FILE_DIR)
 
 import soclog
 from version import VERSION_FULL
+import settings
 from hardware import HWSOC
 import leaflet
 import leafletassembly
@@ -146,6 +147,9 @@ def start_gui():
     treatman = TreatmentManager(listmodel)
     hwsoc.tserialinterface.protocol.sigRecvdMoveOK.connect(treatman.setHWOK)
     hwsoc.tserialinterface.protocol.sigRecvdHWError.connect(treatman.abortTreatment)
+    hwsoc.tserialinterface.protocol.sigHWDisconnected.connect(treatman.freezeTreatment)
+    if settings.autostart_on_device_reconnect:
+        hwsoc.tserialinterface.protocol.sigHWConnected.connect(treatman.unfreezeTreatment)
     treatmanproxy = TreatmentManagerProxy(treatman)
 
     ## Set accessible properties/objects in QML Root Context

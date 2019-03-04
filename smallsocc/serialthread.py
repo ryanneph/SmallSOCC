@@ -1,5 +1,6 @@
 import logging
 import time
+import datetime
 import serial
 from serial.tools import list_ports
 from PyQt5.QtCore import QThread, QMutex, pyqtSignal, pyqtSlot, QWaitCondition
@@ -24,6 +25,8 @@ class SerialThread(QThread):
     The protocol handles serial signals once the connection has been made
     """
     _wait_connection_made  = QWaitCondition()
+    SIG_HWREADY    = b'\xA2'     # receive from HW when ready after sending SIG_SWREADY
+    SIG_SWREADY    = b'\xC1'     # send to query HW for ready state
 
     def __init__(self, protocol_factory, HID=None, BAUD=None):
         """ Initialize thread """
@@ -39,6 +42,9 @@ class SerialThread(QThread):
         self.BAUD = BAUD if BAUD else 115200
         self.EMULATOR_MODE = False
         self.initialized = False
+
+        self.message_frequency = datetime.timedelta(seconds=1)
+        self.last_message_time = datetime.datetime.now()
 
         self.start()
         self._lock_connection.lock()
@@ -56,7 +62,7 @@ class SerialThread(QThread):
         self.EMULATOR_MODE = False
         logger.warning('EMULATOR MODE DEACTIVATED')
 
-    def _init_hw(self):
+    def _init_hw(self, logging=True):
         """Search for available serial devices"""
         portlist = []
         # try to exactly match by HID
@@ -64,11 +70,13 @@ class SerialThread(QThread):
             match = list_ports.grep(self.USB_HID)
             try: portlist.append(next(match))
             except StopIteration:
-                logger.warning("no serial devices with deviceid=\"{!s}\" were found".format(self.USB_HID))
+                if logging:
+                    logger.warning("no serial devices with deviceid=\"{!s}\" were found".format(self.USB_HID))
 
         # try to match first available serial device
         if not portlist:
-            logger.info("Discovering available serial devices...")
+            if logging:
+                logger.info("Discovering available serial devices...")
             portlist = list_ports.comports()
             for p in list(portlist):
                 # TODO: this may be an imperfect check for a valid device
@@ -79,7 +87,8 @@ class SerialThread(QThread):
             PORT = p.device
             try:
                 self.serial = serial.Serial(PORT, self.BAUD, timeout=0, writeTimeout=0)
-                logger.info("Connected to serial device ({!s})".format(device_info(p)))
+                if logging:
+                    logger.info("Connected to serial device ({!s})".format(device_info(p)))
                 if not hasattr(self.serial, 'cancel_read'):
                     self.serial.timeout = 1
                 break
@@ -88,23 +97,54 @@ class SerialThread(QThread):
 
         if self.serial is None:
             if not portlist:
-                logger.warning("no serial devices were discovered")
+                if logging:
+                    logger.warning("no serial devices were discovered")
             else:
-                logger.warning("failed to open connection to any of the discovered serial devices: %s", *["\n  - {}".format(device_info(p)) for p in portlist])
+                if logging:
+                    logger.warning("failed to open connection to any of the discovered serial devices: %s", *["\n  - {}".format(device_info(p)) for p in portlist])
                     #  logger.debug(p.device, p.name, p.description, p.hwid, p.vid, p.pid, p.serial_number, p.location, p.manufacturer, p.product, p.interface)
             if not self.initialized:
                 self._activate_emulator_mode()
+        #  else:
+        #      # block until handshake confirmed
+        #      self.handshake()
 
+    #  def handshake(self):
+    #      """block until handshake confirmed with hardware"""
+    #      self._lock.lock()
+    #      while True:
+    #          try:
+    #              self.serial.write(self.SIG_SWREADY)
+    #              sig = self.serial.read(1)
+    #              if sig == self.SIG_HWREADY:
+    #                  logger.debug("hardware handshake confirmed")
+    #                  break
+
+    #          except Exception as err:
+    #              logger.exception("Error writing to hardware")
+    #              self._lock.unlock()
+    #              self.protocol.connection_lost(err)
+    #              self._lock.lock()
+    #          logger.info("Waiting for handshake with hardware")
+    #          time.sleep(0.1)
+    #      self._lock.unlock()
 
     def _ensure_serial_connection(self):
-        logger.warning("Attempting to connect to hardware...")
-        while not self.serial or not (self.serial.writable() and self.serial.readable()) :
-            self._init_hw()
+        while not self.serial or not (self.serial.writable() and self.serial.readable()):
+            log_this_round = False
+            nowtime = datetime.datetime.now()
+            if (nowtime - self.last_message_time) >= self.message_frequency:
+                logger.info("Attempting to connect to hardware...")
+                self.last_message_time = nowtime
+                log_this_round = True
+
+            self._init_hw(logging=log_this_round)
             if self.serial:
-                logger.warning("Hardware connection successful")
+                logger.info("Hardware connection successful")
                 self._wait_connection_made.wakeAll()
+                self.protocol.connection_made()
                 break
-            time.sleep(1)
+            time.sleep(0.01)
 
     def stop(self):
         """Stop the reader thread"""
@@ -144,9 +184,11 @@ class SerialThread(QThread):
                 except Exception as err:
                     # probably some I/O problem such as disconnected USB serial
                     # adapters -> exit
-                    self.protocol.connection_lost(err)
                     self.serial = None
-                self._lock.unlock()
+                    self._lock.unlock()
+                    self.protocol.connection_lost(err)
+                else:
+                    self._lock.unlock()
 
 
     def write(self, data):
@@ -160,8 +202,14 @@ class SerialThread(QThread):
             self.protocol.sigRecvdHWError.emit()
         else:
             self._lock.lock()
-            self.serial.write(data)
-            self._lock.unlock()
+            try:
+                self.serial.write(data)
+            except Exception as err:
+                logger.error("Error writing to hardware")
+                self._lock.unlock()
+                self.protocol.connection_lost(err)
+            else:
+                self._lock.unlock()
 
     def close(self):
         """Close the serial port and exit reader thread (uses lock)"""

@@ -1,5 +1,6 @@
 import logging
 from hardware import HWSOC
+import settings
 from PyQt5.QtCore import pyqtProperty, pyqtSignal, pyqtSlot, Q_ENUMS, QObject
 from PyQt5.QtQml import qmlRegisterType, qmlAttachedPropertiesObject
 from PyQt5.QtQuick import QQuickItem
@@ -22,8 +23,8 @@ class LeafletAssemblyAttached(QObject):
 
 # leaflet type to be registered with QML (must be sub-class of QObject)
 class Leaflet(QQuickItem):
-    _min_ext = 0
-    _max_ext = 800
+    _min_ext = settings.leaf_extension_minimum
+    _max_ext = settings.leaf_extension_maximum
     next_available = 0
 
     # QML accessible enum defs

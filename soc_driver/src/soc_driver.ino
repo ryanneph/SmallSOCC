@@ -12,32 +12,46 @@
 
 #define SIG_MOVE_OK    0xA0
 #define SIG_HWERROR    0xA1
+#define SIG_HWREADY    0xA2
 
-const auto& cp = CircuitPlayground;
+#define SIG_SWREADY    0xC1
+
+auto& cp = CircuitPlayground;
 
 void setup() {
     Serial.begin(115200);
     cp.begin();
 
-    /* Startup Seqeunce */
-    uint8_t nloops = 4;
-    for (int i=0; i<10*nloops; i++) {
-        /* if (i%10 == 0) { CircuitPlayground.clearPixels(); } */
-        if (i < (nloops-1)*10) {
-            CircuitPlayground.setPixelColor(i%10 + 1, 0, 0, 0);
-            CircuitPlayground.setPixelColor(i%10, 255, 0, 0);
-        } else {
-            CircuitPlayground.setPixelColor(i%10 + 1, 0, 0, 0);
-            CircuitPlayground.setPixelColor(i%10, 0, 255, 0);
-        }
-        delay(40);
-    }
+    /* [> Startup Seqeunce <] */
+    /* uint8_t nloops = 4; */
+    /* for (int i=0; i<10*nloops; i++) { */
+    /*     [> if (i%10 == 0) { CircuitPlayground.clearPixels(); } <] */
+    /*     if (i < (nloops-1)*10) { */
+    /*         CircuitPlayground.setPixelColor(i%10 + 1, 0, 0, 0); */
+    /*         CircuitPlayground.setPixelColor(i%10, 255, 0, 0); */
+    /*     } else { */
+    /*         CircuitPlayground.setPixelColor(i%10 + 1, 0, 0, 0); */
+    /*         CircuitPlayground.setPixelColor(i%10, 0, 255, 0); */
+    /*     } */
+    /*     delay(40); */
+    /* } */
+
+    /* CircuitPlayground.clearPixels(); */
+    /* for (int i=0; i<8; i++) { */
+    /*     CircuitPlayground.setPixelColor(i+1, 0, 0, 30); */
+    /*     delay(100); */
+    /* } */
 
     CircuitPlayground.clearPixels();
-    for (int i=0; i<9; i++) {
+    for (int i=0; i<8; i++) {
         CircuitPlayground.setPixelColor(i+1, 0, 0, 30);
-        delay(100);
     }
+    /* while (true) { */
+    /*     if (Serial.read() == SIG_SWREADY) { */
+    /*         send_signal(SIG_HWREADY); */
+    /*         break; */
+    /*     } */
+    /* } */
 }
 
 uint8_t normalize(int x, int l=0, int h=800) {

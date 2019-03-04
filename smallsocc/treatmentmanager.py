@@ -3,6 +3,7 @@ import logging
 from PyQt5.QtCore import QThread, QMutex, QWaitCondition, \
                          QObject, pyqtSignal, pyqtSlot, pyqtProperty, QCoreApplication
 import sequence
+import settings
 from hardware import HWSOC
 
 logger = logging.getLogger(__name__)
@@ -12,16 +13,20 @@ class TreatmentManagerProxy(QObject):
     onTreatmentStarted   = pyqtSignal()
     onTreatmentStopped   = pyqtSignal(int)
     onTreatmentAborted   = pyqtSignal(int)
+    onTreatmentFreeze    = pyqtSignal(int)
+    onTreatmentUnfreeze  = pyqtSignal()
     onTreatmentCompleted = pyqtSignal(int)
     onTreatmentAdvance   = pyqtSignal(int)
     onTreatmentSkip      = pyqtSignal(int, float)
 
     # cross-thread control via signals
-    startTreatment   = pyqtSignal([int])
-    stopTreatment    = pyqtSignal()
-    restartTreatment = pyqtSignal()
-    abortTreatment   = pyqtSignal()
-    setHWOK          = pyqtSignal()
+    startTreatment    = pyqtSignal([int])
+    stopTreatment     = pyqtSignal()
+    restartTreatment  = pyqtSignal()
+    abortTreatment    = pyqtSignal()
+    freezeTreatment   = pyqtSignal()
+    unfreezeTreatment = pyqtSignal()
+    setHWOK           = pyqtSignal()
 
     onStepsChanged = pyqtSignal([int])
     @pyqtProperty(int, notify=onStepsChanged)
@@ -37,10 +42,14 @@ class TreatmentManagerProxy(QObject):
         self.stopTreatment.connect(tm.stopTreatment)
         self.restartTreatment.connect(tm.restartTreatment)
         self.abortTreatment.connect(tm.abortTreatment)
+        self.freezeTreatment.connect(tm.freezeTreatment)
+        self.unfreezeTreatment.connect(tm.unfreezeTreatment)
         self.setHWOK.connect(tm.setHWOK)
         tm.onTreatmentStarted.connect(self.onTreatmentStarted)
         tm.onTreatmentStopped.connect(self.onTreatmentStopped)
         tm.onTreatmentAborted.connect(self.onTreatmentAborted)
+        tm.onTreatmentFreeze.connect(self.onTreatmentFreeze)
+        tm.onTreatmentUnfreeze.connect(self.onTreatmentUnfreeze)
         tm.onTreatmentCompleted.connect(self.onTreatmentCompleted)
         tm.onTreatmentAdvance.connect(self.onTreatmentAdvance)
         tm.onTreatmentSkip.connect(self.onTreatmentSkip)
@@ -71,6 +80,8 @@ class TreatmentManager(QObject):
         self.stopTreatment.connect(self._stopTreatment)
         self.restartTreatment.connect(self._restartTreatment)
         self.abortTreatment.connect(self._abortTreatment)
+        self.freezeTreatment.connect(self._freezeTreatment)
+        self.unfreezeTreatment.connect(self._unfreezeTreatment)
         self.setHWOK.connect(self._sethwok)
 
         # create QThread and move this object to it
@@ -81,17 +92,20 @@ class TreatmentManager(QObject):
     onTreatmentStarted   = pyqtSignal()
     onTreatmentStopped   = pyqtSignal(int)
     onTreatmentAborted   = pyqtSignal(int)
+    onTreatmentFreeze    = pyqtSignal(int)
+    onTreatmentUnfreeze  = pyqtSignal()
     onTreatmentCompleted = pyqtSignal(int)
     onTreatmentAdvance   = pyqtSignal(int)
     onTreatmentSkip      = pyqtSignal(int, float)
 
     # cross-thread control via signals
-    startTreatment   = pyqtSignal([int])
-    stopTreatment    = pyqtSignal()
-    restartTreatment = pyqtSignal()
-    abortTreatment   = pyqtSignal()
-    setHWOK          = pyqtSignal()
-
+    startTreatment    = pyqtSignal([int])
+    stopTreatment     = pyqtSignal()
+    restartTreatment  = pyqtSignal()
+    abortTreatment    = pyqtSignal()
+    freezeTreatment   = pyqtSignal()
+    unfreezeTreatment = pyqtSignal()
+    setHWOK           = pyqtSignal()
 
     onStepsChanged = pyqtSignal([int])
     @pyqtProperty(int, notify=onStepsChanged)
@@ -135,7 +149,6 @@ class TreatmentManager(QObject):
         self.state_running = v
         self.lock_running.unlock()
 
-
     def deliverAll(self):
         while self.mark < len(self._sequence_cache) and self.running:
             duration = self.deliverOne()
@@ -146,7 +159,8 @@ class TreatmentManager(QObject):
                     self.mark += 1
                     self.steps += 1
                     #  if duration >= 1000:
-                    #      self.onTreatmentAdvance.emit(self.mark) # only updates UI
+                    if settings.update_sw_leaflets_during_treatment:
+                        self.onTreatmentAdvance.emit(self.mark) # only updates UI
                 else:
                     self._stopTreatment()
                     self.state_paused = False
@@ -197,6 +211,23 @@ class TreatmentManager(QObject):
         self.running = False
         self.onTreatmentStopped.emit(self.mark)
         logger.debug("Treatment stopped")
+
+    def _freezeTreatment(self):
+        """Handling for lost HW connection, can be auto-resumed with self._unfreezeTreatment"""
+        if self.running:
+            self.running = False
+            self.state_paused = True
+            self.onTreatmentFreeze.emit(self.mark)
+            logger.debug("Treatment frozen")
+        else:
+            self.state_paused = False
+
+    def _unfreezeTreatment(self):
+        """recover from frozen treatment (due to hw disconnection)"""
+        if self.state_paused:
+            self.running = True
+            self.onTreatmentUnfreeze.emit()
+            logger.debug("Treatment unfrozen")
 
     def _restartTreatment(self):
         self.steps = 0

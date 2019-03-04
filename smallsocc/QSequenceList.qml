@@ -231,7 +231,15 @@ RowLayout {
           // timer_treat.stop();
           lvseq.currentIndex = idx;
           connectUItoHW(true);
-          error_overlay.visible = true;
+          hwerror_overlay.visible = true;
+      }
+      function treatmentFrozen(idx) {
+          footer_status.text = "Treatment frozen: hardware connection error"
+          connectionerror_overlay.visible = true
+      }
+      function treatmentUnfrozen(idx) {
+          footer_status.text = "Treatment resumed: hardware reconnected"
+          connectionerror_overlay.visible = false
       }
       function treatmentCompleted(idx) {
         // always emitted with TreatmentManager.onTreatmentStopped - only put actions here specific to
@@ -247,6 +255,8 @@ RowLayout {
         // connect UI to TreatmentManager
         TreatmentManager.onTreatmentStopped.connect(treatmentStopped)
         TreatmentManager.onTreatmentAborted.connect(treatmentAborted)
+        TreatmentManager.onTreatmentFreeze.connect(treatmentFrozen)
+        TreatmentManager.onTreatmentUnfreeze.connect(treatmentUnfrozen)
         TreatmentManager.onTreatmentCompleted.connect(treatmentCompleted);
         TreatmentManager.onTreatmentAdvance.connect(function(idx) {
           lvseq.currentIndex = idx;

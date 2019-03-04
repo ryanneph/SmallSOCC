@@ -12,8 +12,10 @@ from borg import Borg
 logger = logging.getLogger(__name__)
 
 class TSerialProtocol(Protocol, QObject):
-    sigRecvdHWError   = pyqtSignal()
-    sigRecvdMoveOK    = pyqtSignal()
+    sigRecvdHWError     = pyqtSignal()
+    sigRecvdMoveOK      = pyqtSignal()
+    sigHWDisconnected   = pyqtSignal()
+    sigHWConnected      = pyqtSignal()
 
     def __init__(self):
         Protocol.__init__(self)
@@ -73,9 +75,16 @@ class TSerialProtocol(Protocol, QObject):
         except Exception as e:
             logger.exception("Exception encountered in signal monitor: {!s}".format(e))
 
+
     def connection_lost(self, error):
-        logger.exception('Serial connection to hardware was broken')
-        self.sigRecvdHWError.emit()
+        logger.error('Serial connection to hardware was broken')
+        self.sigHWDisconnected.emit()
+
+    def connection_made(self):
+        logger.info('Connection to serial device established')
+        self.sigHWConnected.emit()
+        self.sigRecvdMoveOK.emit()
+
 
 
 class HWSOC(Borg, QObject):

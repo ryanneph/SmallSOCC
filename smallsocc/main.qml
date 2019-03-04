@@ -92,8 +92,24 @@ ApplicationWindow {
   }
 
   QErrorOverlay {
-    id: error_overlay
+    id: hwerror_overlay
     parent: Overlay.overlay
+    bgcolor: "red"
+    textcolor: "white"
+    button_text: "Dismiss Error"
+    message_text: "Hardware Positioning Error Detected"
+    anchors.fill: parent
+    anchors.margins: 5
+    visible: false
+  }
+
+  QErrorOverlay {
+    id: connectionerror_overlay
+    parent: Overlay.overlay
+    bgcolor: "#E4D10E"
+    textcolor: "black"
+    button_text: "Dismiss Error"
+    message_text: "Hardware Connection Lost\nattempting to reconnect..."
     anchors.fill: parent
     anchors.margins: 5
     visible: false
