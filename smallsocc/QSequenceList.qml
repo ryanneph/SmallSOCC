@@ -26,7 +26,9 @@ RowLayout {
       focus: true
       anchors.fill: parent
       ScrollBar.vertical: ScrollBar {}
-      cacheBuffer: 0
+      cacheBuffer: 100
+      highlightMoveDuration: 0
+      highlightMoveVelocity: -1
       enabled: !isTreating
 
       function next() {
@@ -183,24 +185,77 @@ RowLayout {
       }
       function startTreatment() {
         if (!canStartTreatment()) { return; }
+        connectUItoHW(false);
         if (lvseq.currentIndex < 0) { lvseq.currentIndex = 0; }
         footer_status.text = "Treatment started";
-        timer_treat.start()
+        isTreating = true;
+        TreatmentManager.startTreatment(lvseq.currentIndex);
         timer_elapsed.restart()
+        // timer_treat.start()
       }
       function restartTreatment() {
         if (!canStartTreatment()) { return; }
+        connectUItoHW(false);
         footer_status.text = "Treatment reset";
         lvseq.currentIndex = 0;
-        timer_treat.restart();
+        isTreating = true;
+        TreatmentManager.restartTreatment();
         timer_elapsed.restart();
+        // timer_treat.restart()
       }
       function stopTreatment() {
         if (isTreating) {
-          footer_status.text = "Treatment stopped";
-          timer_treat.stop();
-          timer_elapsed.stop();
+          TreatmentManager.stopTreatment();
         }
+      }
+      function showTreatmentSummary() {
+        var d = DynamicQML.createDynamicObject(mainwindow, "QMessageDialog.qml", {
+          'title': 'Treatment Completed',
+          'text': "Treatment delivery finished for " + TreatmentManager.steps + " segments in " + timer_elapsed.ftime_elapsed,
+          'standardButtons': 0x400 /* StandardButton.Ok */
+        })
+        d.onAccepted.connect( function() { d.destroy(); /* cleanup */ });
+        d.open()
+      }
+      function treatmentStopped(idx) {
+          footer_status.text = "Treatment stopped";
+          isTreating = false;
+          // timer_treat.stop();
+          lvseq.currentIndex = idx;
+          connectUItoHW(true);
+          timer_elapsed.stop();
+      }
+      function treatmentAborted(idx) {
+          footer_status.text = "Treatment aborted";
+          isTreating = false;
+          // timer_treat.stop();
+          lvseq.currentIndex = idx;
+          connectUItoHW(true);
+          error_overlay.visible = true;
+      }
+      function treatmentCompleted(idx) {
+        // always emitted with TreatmentManager.onTreatmentStopped - only put actions here specific to
+        // completion
+        connectUItoHW(false);
+        lvseq.currentIndex = -1
+        connectUItoHW(true);
+        leaflet_assembly.setClosed()
+        footer_status.text = "Treatment finished"
+        showTreatmentSummary()
+      }
+      Component.onCompleted: {
+        // connect UI to TreatmentManager
+        TreatmentManager.onTreatmentStopped.connect(treatmentStopped)
+        TreatmentManager.onTreatmentAborted.connect(treatmentAborted)
+        TreatmentManager.onTreatmentCompleted.connect(treatmentCompleted);
+        TreatmentManager.onTreatmentAdvance.connect(function(idx) {
+          lvseq.currentIndex = idx;
+          updateSOCConfig(false);
+        });
+        TreatmentManager.onTreatmentSkip.connect(function(idx, duration) {
+          lvseq.next();
+          console.warn('Skipping configuration #' + idx+1 + ' with duration: ' + duration + ' ms');
+        });
       }
 
 
@@ -213,39 +268,23 @@ RowLayout {
         Layout.fillWidth: true
       }
       Timer {
+        // Purely a UI timer that runs in tandem with TreatmentManager to keep the UI updated without overhead
+        // from passing queued signals across threads.
         id: timer_treat
         repeat: true
-        property int steps: 1
         onRunningChanged: {
           if (running == true) {
-            isTreating = true
             interval = SequenceListModel.data(lvseq.currentIndex, 'timecode_ms');
-          } else {
-            isTreating = false
           }
         }
         onTriggered: {
           if (lvseq.currentIndex == -1 || lvseq.currentIndex >= (SequenceListModel.size-1)) {
-            stop()
-            if (running == false) {
-              footer_status.text = "Treatment finished"
-              var d = DynamicQML.createDynamicObject(mainwindow, "QMessageDialog.qml", {
-                'title': 'Treatment Completed',
-                'text': "Treatment delivery finished for " + steps + " segments in " + timer_elapsed.ftime_elapsed,
-                'standardButtons': 0x400 /* StandardButton.Ok | StandardButton.Cancel */
-              })
-              d.onAccepted.connect( function() { d.destroy(); /* cleanup */ });
-              d.open()
-            } else {
-              console.error("Error ending treatment")
-            }
+            this.stop()
           } else {
-            // console.debug('advancing to next leaflet configuration')
             do {
-              steps++;
               lvseq.next()
+              // updateSOCConfig(false);
               var duration = SequenceListModel.data(lvseq.currentIndex, 'timecode_ms')
-              if (duration <= 0) { console.warn('Skipping configuration #' + lvseq.currentIndex + ' with duration: ' + duration + ' ms'); }
             } while (duration <= 0);
             interval = duration;
           }

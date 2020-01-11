@@ -102,7 +102,6 @@ Pane {
     Column { /* print content */
       id: seqdelegate_content
       Layout.fillWidth: true
-      anchors.verticalCenter: parent.verticalCenter
       Text { color: content_fgcolor;
              text: "<b>couch:</b> " + Number(rot_couch_deg).toFixed(1) +
              " deg, <b>gantry:</b> " + Number(rot_gantry_deg).toFixed(1) + " deg"

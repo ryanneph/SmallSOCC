@@ -14,6 +14,7 @@ Leaflet {
   property int   compext // complementary leaflet's current extension
   property bool  draggable: false
   property bool  preventCollisions: false
+  // property bool  limitTravel: true #defined in leaflet.py
   // mapping of max_safe_extension to pixels from startpos
   property int   collidepos: {
     if (preventCollisions) { compext/max_extension*full_range; }
@@ -22,9 +23,12 @@ Leaflet {
   // max extension given that compext is set and collisions are avoided
   property int max_safe_extension: {
     if (preventCollisions) { max_extension - compext; }
-    else { max_extension; }
+    else {
+      limitTravel ? max_extension : 9999; }
   }
-
+  property int min_safe_extension: {
+    limitTravel ? 0 : -9999
+  }
   x: startpos.x
   y: startpos.y
   z: isHorizontal() ? 2 : 1
@@ -122,9 +126,10 @@ Leaflet {
       id: rect_stem
       color: root.color_stem
       border.color: Qt.darker(color, 1.4)
-      property var factor: 0.2;
-      width: isHorizontal() ? (rect_leaf.width) : (factor*rect_leaf.width)
-      height: isHorizontal() ? (factor*rect_leaf.height) : (rect_leaf.height)
+      property var heightfactor: 0.2;
+      property var lengthfactor: 20;
+      width: isHorizontal() ? (lengthfactor*rect_leaf.width) : (heightfactor*rect_leaf.width)
+      height: isHorizontal() ? (heightfactor*rect_leaf.height) : (lengthfactor*rect_leaf.height)
 
       anchors.verticalCenter: isHorizontal() ? rect_leaf.verticalCenter : undefined
       anchors.horizontalCenter: isHorizontal() ? undefined : rect_leaf.horizontalCenter
@@ -166,22 +171,30 @@ Leaflet {
 
     drag.minimumX: {
       if (isHorizontal()) {
-        isPositive() ? parent.startpos.x : parent.startpos.x - (parent.full_range-root.collidepos)
+        if (limitTravel) {
+          isPositive() ? parent.startpos.x : parent.startpos.x - (parent.full_range-root.collidepos)
+        } else { -9999 }
       } else { 0 }
     }
     drag.maximumX: {
       if (isHorizontal()) {
-        isPositive() ? parent.startpos.x + (root.full_range-root.collidepos) : parent.startpos.x
+        if (limitTravel) {
+          isPositive() ? parent.startpos.x + (root.full_range-root.collidepos) : parent.startpos.x
+        } else { 9999 }
       } else { 0 }
     }
     drag.minimumY: {
       if (isVertical()) {
-        isPositive() ? parent.startpos.y : parent.startpos.y - (full_range-root.collidepos)
+        if (limitTravel) {
+          isPositive() ? parent.startpos.y : parent.startpos.y - (full_range-root.collidepos)
+        } else { -9999 }
       } else { 0 }
     }
     drag.maximumY: {
       if (isVertical()) {
-        isPositive() ? parent.startpos.y + (full_range-root.collidepos) : parent.startpos.y
+        if (limitTravel) {
+          isPositive() ? parent.startpos.y + (full_range-root.collidepos) : parent.startpos.y
+        } else { 9999 }
       } else { 0 }
     }
 

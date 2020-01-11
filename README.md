@@ -59,6 +59,19 @@ virtualenv soc_dev && source soc_dev/bin/activate
 python -m pip install -e .
 ```
 
+#### Developing for the Hardware Microcontroller
+Install [PlatformIO IDE](https://docs.platformio.org/en/latest/ide/pioide.html)  
+or, [PlatformIO cli](https://docs.platformio.org/en/latest/installation.html):
+```bash
+sudo pip install -U platformio
+```
+Then initialize the development environment, build the code, and flash it to the device
+```bash
+cd soc_driver
+pio init -b <board-id>
+pio run --target upload
+```
+
 ----------------------------
 ## Addendum
 ### Platform Considerations

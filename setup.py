@@ -26,7 +26,7 @@ setup(name='SmallSOCC',
       },
       install_requires=[
           'PyOpenGL>=3.1.0',
-          'PyQt5 >=5.9, <=5.10.1',
+          'PyQt5 >=5.12',
           'pyserial>=3.4'
       ],
 )

@@ -14,6 +14,7 @@ import logging
 
 from OpenGL import GL
 from PyQt5 import QtCore
+from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtQuick import QQuickItem
@@ -27,6 +28,7 @@ from hardware import HWSOC
 import leaflet
 import leafletassembly
 import sequence
+from treatmentmanager import TreatmentManager, TreatmentManagerProxy
 import pathhandler
 
 logger = logging.getLogger(__name__)
@@ -78,12 +80,14 @@ def preExit():
 def start_gui():
     parser = argparse.ArgumentParser(description='SmallSOCC v{!s} - Frontend for interfacing with SOC hardware'.format(VERSION_FULL),
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-L', '--loglevel', type=str, choices=[*logging._nameToLevel.keys()], default='WARNING', help='set the loglevel')
+    parser.add_argument('-L', '--loglevel', type=str, choices=sorted([*logging._nameToLevel.keys()], key=lambda x: logging._nameToLevel[x], reverse=True), default='WARNING', help='set the loglevel')
     parser.add_argument('--logconf', type=str, default=os.path.join(LIB_DIR, 'logging.conf.json'), help='path to log configuration')
     args = parser.parse_args()
 
     # initialize logger
     soclog.init_logging(level=logging._nameToLevel.get(args.loglevel, None), config_path=args.logconf)
+
+    hwsoc = HWSOC(8, HID=None, BAUD=None) # init singleton instance for controlling hardware
 
     listmodel = sequence.SequenceListModel()
     if args.loglevel is not 'NOTSET' and logging._nameToLevel[args.loglevel] <= logging.DEBUG:
@@ -95,7 +99,7 @@ def start_gui():
             # SAMPLE ITEMS FOR DEBUG
             from sequence import SequenceItem, SequenceItemType
             sample_sequenceitems = [
-                SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=0, datecreatedstr="2016 Oct 31 12:00:00", type='Manual'),
+                SequenceItem(rot_couch_deg=5, rot_gantry_deg=0, timecode_ms=1000, date_created="2016 Oct 31 12:00:00", type='Manual'),
                 SequenceItem(rot_couch_deg=12, rot_gantry_deg=120, timecode_ms=1500, description="descriptive text2", type=SequenceItemType.Auto),
                 SequenceItem(rot_couch_deg=24, rot_gantry_deg=25, timecode_ms=3000, description="descriptive text3"),
                 SequenceItem(rot_couch_deg=0, rot_gantry_deg=45, timecode_ms=4500, description="descriptive text4"),
@@ -103,7 +107,6 @@ def start_gui():
             listmodel = sequence.SequenceListModel(elements=sample_sequenceitems)
 
 
-    HWSOC(8, HID=None) # init singleton instance for controlling hardware
 
     # integrate qml logging with python logging
     QtCore.qInstallMessageHandler(qt_message_handler)
@@ -140,23 +143,34 @@ def start_gui():
     fratio = min(_h*refDpi/(dpi*refHeight), _w*refDpi/(dpi*refWidth)) # font pointSize scaling
     logger.debug('Setting scaling ratios - general: {}; font: {}'.format(sratio, fratio))
 
+    treatman = TreatmentManager(listmodel)
+    hwsoc.tserialinterface.protocol.sigRecvdMoveOK.connect(treatman.setHWOK)
+    hwsoc.tserialinterface.protocol.sigRecvdHWError.connect(treatman.abortTreatment)
+    treatmanproxy = TreatmentManagerProxy(treatman)
+
     ## Set accessible properties/objects in QML Root Context
     rootContext.setContextProperty("mainwindow_title", 'SOC Controller - {!s}'.format(VERSION_FULL))
     # make seq. list model accessible to qml-listview
     rootContext.setContextProperty("SequenceListModel", listmodel)
     pathhandler_instance = pathhandler.PathHandler()
     rootContext.setContextProperty("PathHandler", pathhandler_instance)
+    rootContext.setContextProperty("HWSOC", hwsoc)
+    rootContext.setContextProperty("TreatmentManager", treatmanproxy)
     rootContext.setContextProperty("sratio", sratio)
     rootContext.setContextProperty("fratio", fratio)
+    rootContext.setContextProperty("debug_mode", logging._nameToLevel[args.loglevel]<=logging.DEBUG)
 
     # load layout
-    engine.load(QtCore.QUrl(os.path.join(dirname(__file__), 'main.qml')))
+    engine.load(os.path.join(dirname(__file__), 'main.qml'))
+
 
     ## connect signals to slots - unnecessary, example of grabbing qml objects from py-code
     # listview buttons
     #  rootObject = engine.rootObjects()[0]
     #  btns = rootObject.findChildren(QQuickItem, "list_buttons", QtCore.Qt.FindChildrenRecursively)[0]
     #  btns.findChild(QQuickItem, 'btn_moveup').clicked.connect(lambda: print('moveup clicked'))
+
+    # run event loop
     return app.exec_()
 
 if __name__ == '__main__':

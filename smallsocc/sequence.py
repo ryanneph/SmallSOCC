@@ -33,6 +33,13 @@ def roleInt2Name(idx: int):
     else:
         return None
 
+def validate_leaflet_positions(pos_list):
+    """convert each position in the list to a valid form"""
+    l = []
+    for p in pos_list:
+        l.append(int(p))
+
+    return l
 
 class SequenceItem(QtCore.QObject):
     """ Backend representation for distinct setting of leaflet positions, beam angles,
@@ -62,6 +69,8 @@ class SequenceItem(QtCore.QObject):
                     if k not in self._members:
                         logger.error('"{!s}" is not a property of SequenceItem'.format(k))
                     else:
+                        if k == 'extension_list':
+                            kwargs[k] = validate_leaflet_positions(kwargs[k])
                         logger.debug2('setting self._members[{!s}] to {!s}'.format(k, kwargs[k]))
                         self._members[k].value = kwargs[k]
                 except:
@@ -234,15 +243,19 @@ class SequenceListModel(QtCore.QAbstractListModel):
             logger.exception('delegate refresh failed for index "{}"'.format(str(idx)))
 
     ## METHODS
+    def __len__(self):
+        return len(self._items)
+
     # Virtual Base Method
     sizeChanged = pyqtSignal([int])
     @pyqtProperty(int, notify=sizeChanged)
     def size(self):
-        return self.rowCount()
+        return self.__len__()
 
     @pyqtSlot(result=int)
     def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self._items)
+        return self.__len__()
+
 
     @pyqtSlot(int, result=SequenceItem)
     def getItem(self, index: int):
