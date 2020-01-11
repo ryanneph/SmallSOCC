@@ -14,47 +14,30 @@ clone the repository:
 git clone https://github.com/ryanneph/SmallSOCC.git
 cd SmallSOCC
 ```
-then install using pip or pipenv:
+then install using pip:
 ```bash
-pip install .
-```
-or
-```bash
-pip install pipenv
-pipenv install .
+python -m pip install .
 ```
 finally run with: 
 ```bash
 smallsocc
 ```
-or 
+or run directly with:
 ```bash
 python smallsocc/gui.py
 ```
+
 ### Development
 When installed as a development package, changes to the source code will be immediately reflected the next
 time `smallsocc` is run, without requiring a re-installation.
 
-First clone the repository:
+First clone the repository as before, then install:
 ```bash
-git clone https://github.com/ryanneph/SmallSOCC.git
-cd SmallSOCC
-```
-Then install:
-#### Using pipenv (preferred way)
-```bash
-pip install pipenv
-pipenv install -e .
-```
-#### Using Anaconda/Conda
-```bash
-conda create -n soc_dev python=3
-conda activate soc_dev
 python -m pip install -e .
 ```
-#### Using virtualenv
+It is encouraged to install into a virtualenv rather than your default python dist: 
 ```bash 
-pip install virtualenv
+python -m pip install virtualenv
 virtualenv soc_dev && source soc_dev/bin/activate
 python -m pip install -e .
 ```
@@ -63,7 +46,7 @@ python -m pip install -e .
 Install [PlatformIO IDE](https://docs.platformio.org/en/latest/ide/pioide.html)  
 or, [PlatformIO cli](https://docs.platformio.org/en/latest/installation.html):
 ```bash
-sudo pip install -U platformio
+sudo python -m pip install -U platformio
 ```
 Then initialize the development environment, build the code, and flash it to the device
 ```bash
@@ -77,11 +60,12 @@ pio run --target upload
 ### Platform Considerations
 Communicating with serial ports is a bit different on windows and linux. 
 
-In linux, serial comm. is handled by the kernel and accessible using virtual file-like descriptors 
-that typically show as `/dev/ttyACMx` or `/dev/ttyUSBx` depending on your distribution.
+In linux, serial ports are accessed using virtual file-like descriptors 
+that typically show as `/dev/ttyACMx` or `/dev/ttyUSBx`.
 
-In windows, serial devices are assigned to a COMx ports instead. All of this should be relatively invisible since the PySerial package
+In windows, serial devices are assigned to a COMx ports instead. All of this should be relatively opaque since the PySerial package
 provides a convenient way to list all accessible serial ports regardless of the system.
 
-Every attempt has been made to automatically detect
-the correct serial device on startup, but if manual specification is necessary, you may feed the your usb hardware ID as an argument to the device initialization function `HWSOC(8, HID=<xxxx:xxxx>)` in `VID:PID` format. You can view the detected devices and their HIDs by inspecting the command line warnings after a failure to connect.
+Every attempt has been made to automatically detect the correct serial device on startup, but if manual specification is necessary,
+you may feed the your usb hardware ID as an argument to the device initialization function `HWSOC(8, HID=<xxxx:xxxx>)` in `VID:PID` format.
+You can view the detected devices and their HIDs by inspecting the command line warnings after a failure to connect.
