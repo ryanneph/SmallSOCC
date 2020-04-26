@@ -23,7 +23,7 @@ class LeafletAssemblyAttached(QObject):
 # leaflet type to be registered with QML (must be sub-class of QObject)
 class Leaflet(QQuickItem):
     _min_ext = 0
-    _max_ext = 800
+    _max_ext = 5360
     next_available = 0
 
     # QML accessible enum defs

@@ -146,7 +146,8 @@ class TreatmentManager(QObject):
                     self.mark += 1
                     self.steps += 1
                     #  if duration >= 1000:
-                    #      self.onTreatmentAdvance.emit(self.mark) # only updates UI
+                        #  self.onTreatmentAdvance.emit(self.mark) # only updates UI
+                    self.onTreatmentAdvance.emit(self.mark) # only updates UI
                 else:
                     self._stopTreatment()
                     self.state_paused = False

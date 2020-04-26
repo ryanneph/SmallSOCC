@@ -40,7 +40,7 @@ void setup() {
     }
 }
 
-uint8_t normalize(int x, int l=0, int h=800) {
+uint8_t normalize(int x, int l=0, int h=5360) {
     /* convert range from [l,h] to [0,256) */
     return min(255, max(0, floor((x-l)*255.0/(h-l))));
 }
@@ -123,7 +123,7 @@ void loop() {
                 leaflet = buf[0];
                 pos = (int16_t(buf[1])<<8)|int16_t(buf[2]);
                 /* Serial.println(pos, BIN); */
-                uint8_t upos = normalize(pos, 0, 255);
+                uint8_t upos = normalize(pos);
                 /* Serial.println(upos, BIN); */
                 /* Serial.println(""); */
 
